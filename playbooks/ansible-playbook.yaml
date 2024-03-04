@@ -1,0 +1,96 @@
+- name: Setup Kubernetes (Minikube) Cluster
+  hosts: clusters
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Install system updates
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes
+
+    - name: Remove package not needed anymore
+      yum:
+        autoremove: yes
+
+    - name: Removing any installed docker and python3
+      yum:
+        name:
+          - docker
+          - docker-client
+          - docker-client-latest
+          - docker-common
+          - docker-latest
+          - docker-latest-logrotate
+          - docker-logrotate
+          - docker-engine
+        state: absent
+
+    - name: Add docker community edition
+      yum_repository:
+        name: docker-ce-stable
+        description: Docker CE Stable - $basearch
+        baseurl: https://download.docker.com/linux/centos/7/$basearch
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://download.docker.com/linux/centos/gpg
+
+    - name: Install docker
+      yum:
+        name:
+          - vim
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+    
+    - name: Add docker group
+      group: 
+        name: docker
+        state: present
+
+    - name: Add $USER to docker group
+      user:
+        name: '{{ ansible_user }}'
+        groups: docker
+        append: yes
+    
+    - name: Do a ssh reset in order to reflect the $USER group changes
+      meta: reset_connection
+    
+    - name: Start docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Installing minikube
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /usr/local/bin/minikube
+        mode: 0755
+    
+    - name: Copy minikube.service into systemd
+      template:
+        src: minikube.service
+        dest: /usr/lib/systemd/system/minikube.service
+      vars:
+        ansible_user: '{{ ansible_user }}'
+
+    - name: Reload systemd daemon
+      systemd:
+        state: reloaded
+
+    - name: Start minikube service
+      systemd:
+        name: minikube
+        state: started
+        enabled: true
+
+    - name: Installing kubectl
+      get_url:
+        url: https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: 0755
