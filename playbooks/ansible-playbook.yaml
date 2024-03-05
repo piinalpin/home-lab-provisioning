@@ -29,8 +29,8 @@
     - name: Add docker community edition
       yum_repository:
         name: docker-ce-stable
-        description: Docker CE Stable - $basearch
-        baseurl: https://download.docker.com/linux/centos/7/$basearch
+        description: Docker CE Stable- $basearch
+        baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
         enabled: yes
         gpgcheck: yes
         gpgkey: https://download.docker.com/linux/centos/gpg
@@ -60,6 +60,19 @@
     - name: Do a ssh reset in order to reflect the $USER group changes
       meta: reset_connection
     
+    - name: Enable and start firewalld service
+      systemd:
+        name: firewalld
+        state: started
+        enabled: yes
+        
+    - name: Permit traffic in default zone on port 8443/tcp
+      ansible.posix.firewalld:
+        port: 8443/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+    
     - name: Start docker service
       systemd:
         name: docker
@@ -74,14 +87,11 @@
     
     - name: Copy minikube.service into systemd
       template:
-        src: minikube.service
+        src: minikube.service.j2
         dest: /usr/lib/systemd/system/minikube.service
-      vars:
-        ansible_user: '{{ ansible_user }}'
 
     - name: Reload systemd daemon
-      systemd:
-        state: reloaded
+      command: systemctl daemon-reload
 
     - name: Start minikube service
       systemd:
@@ -89,8 +99,61 @@
         state: started
         enabled: true
 
+    - name: Find kubectl conf files on remote
+      find:
+        paths: "/home/{{ ansible_user }}/.kube/"
+        file_type: file
+      register: kube_files
+
+    - name: Copy kubectl conf
+      fetch:
+        src: "{{ item.path }}"
+        dest: "../.machines/{{ ansible_hostname }}/.kube/{{ item.path | basename }}"
+        flat: yes
+      with_items: "{{ kube_files.files }}"
+
+    - name: Find minikube conf files on remote
+      find:
+        paths: "/home/{{ ansible_user }}/.minikube/"
+        file_type: file
+      register: minikube_files
+
+    - name: Copy minikube conf
+      fetch:
+        src: "{{ item.path }}"
+        dest: "../.machines/{{ ansible_hostname }}/.minikube/{{ item.path | basename }}"
+        flat: yes
+      with_items: "{{ minikube_files.files }}"
+
+    - name: Find minikube profile files on remote
+      find:
+        paths: "/home/{{ ansible_user }}/.minikube/profiles/minikube"
+        file_type: file
+      register: minikube_profiles_files
+
+    - name: Copy minikube profile
+      fetch:
+        src: "{{ item.path }}"
+        dest: "../.machines/{{ ansible_hostname }}/.minikube/profiles/minikube/{{ item.path | basename }}"
+        flat: yes
+      with_items: "{{ minikube_profiles_files.files }}"
+
+    - name: Enable kubectl alias k
+      lineinfile:
+        path: "/home/{{ ansible_user }}/.bashrc"
+        line: alias k="kubectl"
+        insertafter: EOF
+        state: present
+
+    - name: Enable kubectl alias kc
+      lineinfile:
+        path: "/home/{{ ansible_user }}/.bashrc"
+        line: alias kc="kubectl"
+        insertafter: EOF
+        state: present
+
     - name: Installing kubectl
       get_url:
-        url: https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
+        url: https://dl.k8s.io/release/{{ lookup('url', 'https://dl.k8s.io/release/stable.txt') }}/bin/linux/amd64/kubectl
         dest: /usr/local/bin/kubectl
         mode: 0755

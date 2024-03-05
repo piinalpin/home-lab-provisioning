@@ -2,3 +2,4 @@
 .vagrant.d/
 .vscode/
 .terraform/
+.machines/
