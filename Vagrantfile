@@ -13,6 +13,7 @@ Vagrant.configure(2) do |config|
         master.vm.provider "virtualbox" do |v|
             v.memory = 4096
             v.cpus = 2
+            v.name = "k8s-master"
         end
 
         master.vm.hostname = "master"
@@ -23,14 +24,16 @@ Vagrant.configure(2) do |config|
     # Provision worker nodes
     WORKER_NODE_IPS.each_with_index do |node_ip, index|
         hostname = "worker-#{'%02d' % (index + 1)}"
+        forwarded_port = (MASTER_SSH_FORWARDED_PORT + index)
         config.vm.define "#{hostname}" do |worker|
             worker.vm.provider "virtualbox" do |v|
                 v.memory = 2048
                 v.cpus = 2
+                v.name = "k8s-#{hostname}"
             end
             worker.vm.hostname = "#{hostname}"
             worker.vm.network "private_network", ip: node_ip
-            worker.vm.network "forwarded_port", guest: 22, host: MASTER_SSH_FORWARDED_PORT + index, auto_correct: true
+            worker.vm.network "forwarded_port", guest: 22, host: forwarded_port, auto_correct: true
         end
     end
 end
