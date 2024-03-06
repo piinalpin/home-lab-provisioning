@@ -1,44 +1,119 @@
-- name: Setup Kubernetes (Minikube) Cluster
-  hosts: clusters
-  gather_facts: yes
+- name: Setup Kubernetes Environment
+  hosts: all
   become: yes
+  become_method: sudo
+  gather_facts: yes
+  roles:
+    - role: robertdebock.modprobe
+      modprobe_modules:
+        - br_netfilter
   tasks:
-    - name: Install system updates
-      yum:
-        name: '*'
+
+    - name: Set DEBIAN_FRONTEND environment variable
+      set_fact: 
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Remove generated ubuntu hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: "ubuntu-*"
+        state: absent
+        backup: yes
+
+    - name: Remove generated hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: ".* {{ hostvars[item]['ansible_hostname']}} {{ hostvars[item]['ansible_hostname']}}"
+        state: absent
+        backup: yes
+      with_items: "{{ ansible_play_batch }}"
+
+    - name: Update hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: ".*\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
+        line: "{{ hostvars[item]['ansible_ssh_host'] }}\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}.local"
+        state: present
+        backup: yes
+      with_items: "{{ ansible_play_batch }}"
+
+    - name: Stop and disable UFW firewall
+      service:
+        name: ufw
+        state: stopped
+        enabled: no
+
+    - name: Enable and load kernel modules
+      lineinfile:
+        path: /etc/modules-load.d/k8s.conf
+        line: "br_netfilter"
+        state: present
+        create: yes
+    
+    - name: Add kernel settings
+      blockinfile:
+        path: /etc/sysctl.d/k8s.conf
+        block: |
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.bridge.bridge-nf-call-iptables = 1
+        create: yes
+      notify:
+        - Apply kernel settings
+    
+    - name: Remove package not needed anymore
+      apt:
+        autoremove: yes
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install required package
+      apt:
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
         state: latest
         update_cache: yes
 
-    - name: Remove package not needed anymore
-      yum:
-        autoremove: yes
+    - name: Add docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
 
-    - name: Removing any installed docker and python3
-      yum:
-        name:
-          - docker
-          - docker-client
-          - docker-client-latest
-          - docker-common
-          - docker-latest
-          - docker-latest-logrotate
-          - docker-logrotate
-          - docker-engine
+    - name: Add docker repository to sources list
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+        state: present
+        filename: docker
+
+    - name: Ensure apt keyrings directory exists
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+
+    - name: Delete kubernetes keyrings if exists
+      file:
+        path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
         state: absent
-
-    - name: Add docker community edition
-      yum_repository:
-        name: docker-ce-stable
-        description: Docker CE Stable- $basearch
-        baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
-        enabled: yes
-        gpgcheck: yes
-        gpgkey: https://download.docker.com/linux/centos/gpg
-
-    - name: Install docker
-      yum:
+    
+    - name: Add kubernetes APT repository key
+      shell: >
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    
+    - name: Add kubernetes repository to sources list
+      apt_repository:
+        repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+        state: present
+        filename: kubernetes
+        update_cache: yes
+    
+    - name: Install docker packages
+      apt:
         name:
-          - vim
           - docker-ce
           - docker-ce-cli
           - containerd.io
@@ -47,113 +122,47 @@
         state: present
     
     - name: Add docker group
-      group: 
+      group:
         name: docker
         state: present
 
-    - name: Add $USER to docker group
+    - name: Add user to docker group
       user:
-        name: '{{ ansible_user }}'
+        name: "{{ ansible_user }}"
         groups: docker
         append: yes
-    
-    - name: Do a ssh reset in order to reflect the $USER group changes
-      meta: reset_connection
-    
-    - name: Enable and start firewalld service
-      systemd:
-        name: firewalld
-        state: started
-        enabled: yes
-        
-    - name: Permit traffic in default zone on port 8443/tcp
-      ansible.posix.firewalld:
-        port: 8443/tcp
-        permanent: yes
-        state: enabled
-        immediate: yes
-    
-    - name: Start docker service
-      systemd:
-        name: docker
-        state: started
-        enabled: true
 
-    - name: Installing minikube
-      get_url:
-        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        dest: /usr/local/bin/minikube
-        mode: 0755
+    - name: Create docker daemon directory
+      file:
+        path: /etc/docker
+        state: directory
+
+    - name: Configure docker daemon
+      copy:
+        src: docker-daemon.json
+        dest: /etc/docker/daemon.json
+      notify:
+        - Reload systemd daemon
+        - Enable and start docker
+
+    - name: Install kubernetes packages
+      apt:
+        name:
+          - kubelet=1.29.*
+          - kubeadm=1.29.*
+          - kubectl=1.29.*
+        state: present
+
+  handlers:
     
-    - name: Copy minikube.service into systemd
-      template:
-        src: minikube.service.j2
-        dest: /usr/lib/systemd/system/minikube.service
+    - name: Apply kernel settings
+      command: sysctl --system
 
     - name: Reload systemd daemon
       command: systemctl daemon-reload
-
-    - name: Start minikube service
-      systemd:
-        name: minikube
+    
+    - name: Enable and start docker
+      service:
+        name: docker
         state: started
-        enabled: true
-
-    - name: Find kubectl conf files on remote
-      find:
-        paths: "/home/{{ ansible_user }}/.kube/"
-        file_type: file
-      register: kube_files
-
-    - name: Copy kubectl conf
-      fetch:
-        src: "{{ item.path }}"
-        dest: "../.machines/{{ ansible_hostname }}/.kube/{{ item.path | basename }}"
-        flat: yes
-      with_items: "{{ kube_files.files }}"
-
-    - name: Find minikube conf files on remote
-      find:
-        paths: "/home/{{ ansible_user }}/.minikube/"
-        file_type: file
-      register: minikube_files
-
-    - name: Copy minikube conf
-      fetch:
-        src: "{{ item.path }}"
-        dest: "../.machines/{{ ansible_hostname }}/.minikube/{{ item.path | basename }}"
-        flat: yes
-      with_items: "{{ minikube_files.files }}"
-
-    - name: Find minikube profile files on remote
-      find:
-        paths: "/home/{{ ansible_user }}/.minikube/profiles/minikube"
-        file_type: file
-      register: minikube_profiles_files
-
-    - name: Copy minikube profile
-      fetch:
-        src: "{{ item.path }}"
-        dest: "../.machines/{{ ansible_hostname }}/.minikube/profiles/minikube/{{ item.path | basename }}"
-        flat: yes
-      with_items: "{{ minikube_profiles_files.files }}"
-
-    - name: Enable kubectl alias k
-      lineinfile:
-        path: "/home/{{ ansible_user }}/.bashrc"
-        line: alias k="kubectl"
-        insertafter: EOF
-        state: present
-
-    - name: Enable kubectl alias kc
-      lineinfile:
-        path: "/home/{{ ansible_user }}/.bashrc"
-        line: alias kc="kubectl"
-        insertafter: EOF
-        state: present
-
-    - name: Installing kubectl
-      get_url:
-        url: https://dl.k8s.io/release/{{ lookup('url', 'https://dl.k8s.io/release/stable.txt') }}/bin/linux/amd64/kubectl
-        dest: /usr/local/bin/kubectl
-        mode: 0755
+        enabled: yes

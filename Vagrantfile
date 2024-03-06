@@ -1,27 +1,36 @@
-IMAGE_NAME = "bento/centos-7"
-NODE_NAME = "minikube"
+IMAGE_NAME = "ubuntu/focal64"
+MASTER_NODE_IP = "192.168.56.2"
+MASTER_SSH_FORWARDED_PORT = 2722
+WORKER_NODE_IPS = ["192.168.56.3", "192.168.56.4"]
 
 Vagrant.configure(2) do |config|
-    config.vm.provider "virtualbox" do |v|
-        v.memory = 4096
-        v.cpus = 2
+    # Configure box
+    config.vm.box = IMAGE_NAME
+    config.vm.box_check_update = false
+
+    # Provision Master Node
+    config.vm.define "master" do |master|
+        master.vm.provider "virtualbox" do |v|
+            v.memory = 4096
+            v.cpus = 2
+        end
+
+        master.vm.hostname = "master"
+        master.vm.network "private_network", ip: MASTER_NODE_IP
+        master.vm.network "forwarded_port", guest: 22, host: MASTER_SSH_FORWARDED_PORT, auto_correct: true
     end
 
-    config.vm.network "forwarded_port", guest: 8443, host: 8443, auto_correct: true
-
-    config.vm.define NODE_NAME do |master|
-        master.vm.box = IMAGE_NAME
-
-        master.vm.network "private_network", ip: "192.168.56.2"
-        master.vm.hostname = NODE_NAME
-        # master.vm.provision "ansible_local" do | ansible |
-        #     ansible.compatibility_mode = "2.0"
-        #     ansible.playbook = "playbooks/ansible-playbook.yaml"
-        #     ansible.inventory_path = "inventory/vagrant.hosts"
-        #     ansible.extra_vars = {
-        #         node_ip: "192.168.50.10",
-        #     }
-        #     ansible.version = "latest"
-        # end
+    # Provision worker nodes
+    WORKER_NODE_IPS.each_with_index do |node_ip, index|
+        hostname = "worker-#{'%02d' % (index + 1)}"
+        config.vm.define "#{hostname}" do |worker|
+            worker.vm.provider "virtualbox" do |v|
+                v.memory = 2048
+                v.cpus = 2
+            end
+            worker.vm.hostname = "#{hostname}"
+            worker.vm.network "private_network", ip: node_ip
+            worker.vm.network "forwarded_port", guest: 22, host: MASTER_SSH_FORWARDED_PORT + index, auto_correct: true
+        end
     end
 end
