@@ -3,5 +3,5 @@
 .vscode/
 .terraform/
 .machines/
-playbooks/files/joincluster.sh
+playbooks/files/joincluster
 config.yaml

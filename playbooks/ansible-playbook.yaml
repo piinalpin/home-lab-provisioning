@@ -3,15 +3,7 @@
   become: yes
   become_method: sudo
   gather_facts: yes
-  roles:
-    - role: robertdebock.modprobe
-      modprobe_modules:
-        - br_netfilter
   tasks:
-
-    - name: Set DEBIAN_FRONTEND environment variable
-      set_fact: 
-        DEBIAN_FRONTEND: noninteractive
 
     - name: Remove generated ubuntu hosts
       lineinfile:
@@ -37,60 +29,72 @@
         backup: yes
       with_items: "{{ ansible_play_batch }}"
 
-    - name: Stop and disable UFW firewall
-      service:
-        name: ufw
-        state: stopped
-        enabled: no
-
-    - name: Enable and load kernel modules
-      lineinfile:
-        path: /etc/modules-load.d/k8s.conf
-        line: "br_netfilter"
-        state: present
-        create: yes
-    
-    - name: Add kernel settings
-      blockinfile:
-        path: /etc/sysctl.d/k8s.conf
-        block: |
-          net.bridge.bridge-nf-call-ip6tables = 1
-          net.bridge.bridge-nf-call-iptables = 1
-        create: yes
-
-    - name: Apply kernel settings
-      command: sysctl --system
-    
-    - name: Remove package not needed anymore
-      apt:
-        autoremove: yes
-
-    - name: Update package cache
-      apt:
-        update_cache: yes
-
-    - name: Install required package
+    - name: Install packages that allow apt to be used over HTTPS
       apt:
         name:
-          - curl
           - apt-transport-https
           - ca-certificates
-          - gnupg
-          - lsb-release
-        state: latest
+          - curl
+          - gnupg-agent
+          - software-properties-common
+        state: present
         update_cache: yes
 
-    - name: Add docker GPG key
+    - name: Add an apt signing key for Docker
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
 
-    - name: Add docker repository to sources list
+    - name: Add apt repository for stable version
       apt_repository:
         repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
         state: present
-        filename: docker
 
+    - name: Install docker and dependecies
+      apt: 
+        name:
+          - docker-ce 
+          - docker-ce-cli 
+          - containerd.io
+        state: present
+        update_cache: yes
+      notify: Check docker status
+
+    - name: Configure containerd config
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { src: config.toml, dest: /etc/containerd/config.toml }
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable and start containerd
+      service:
+        name: containerd
+        state: restarted
+        enabled: yes
+
+    - name: Add vagrant user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+    
+    - name: Remove swapfile from /etc/fstab
+      mount:
+        name: "{{ item }}"
+        fstype: swap
+        state: absent
+      with_items:
+        - swap
+        - none
+
+    - name: Disable swap
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+    
     - name: Ensure apt keyrings directory exists
       file:
         path: /etc/apt/keyrings
@@ -111,89 +115,40 @@
         state: present
         filename: kubernetes
         update_cache: yes
-    
-    - name: Install docker packages
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-        state: present
-    
-    - name: Add docker group
-      group:
-        name: docker
-        state: present
 
-    - name: Add user to docker group
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
-
-    - name: Create docker daemon directory
-      file:
-        path: /etc/docker
-        state: directory
-
-    - name: Configure docker daemon and containerd
-      copy:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
-      with_items:
-        - { src: docker-daemon.json, dest: /etc/docker/daemon.json }
-        - { src: config.toml, dest: /etc/containerd/config.toml }
-        - { src: crictl.yaml, dest: /etc/crictl.yaml }
-    
-    - name: Reload systemd daemon
-      command: systemctl daemon-reload
-
-    - name: Enable and start containerd
-      service:
-        name: containerd
-        state: restarted
-        enabled: yes
-    
-    - name: Enable and start docker
-      service:
-        name: docker
-        state: restarted
-        enabled: yes
-
-    - name: Install kubernetes packages
-      apt:
+    - name: Install Kubernetes binaries
+      apt: 
         name:
           - kubelet=1.29.*
           - kubeadm=1.29.*
           - kubectl=1.29.*
         state: present
-    
-    - name: Update DNS configuration in resolved.conf
+        update_cache: yes
+
+    - name: Ensure /etc/default/kubelet exists
+      file:
+        path: /etc/default/kubelet
+        state: touch
+
+    - name: Configure node ip
       lineinfile:
-        path: /etc/systemd/resolved.conf
-        regexp: "^#?DNS="
-        line: "DNS=8.8.8.8"
+        path: /etc/default/kubelet
+        line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
         state: present
-    
-    - name: Restart systemd-resolved service
+
+    - name: Restart kubelet
       service:
-        name: systemd-resolved
+        name: kubelet
         state: restarted
-    
-    - name: Configure SSH
-      copy:
-        src: k8s
-        dest: "/home/{{ ansible_user }}/.ssh/id_rsa"
-        mode: "0600"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-    
-    - name: Add SSH public key into authorized_keys
-      authorized_key:
-        user: "{{ ansible_user }}"
-        key: "{{ lookup('file', 'k8s.pub') }}"
+        daemon_reload: yes
+        enabled: yes
+
+  handlers:
+    - name: Check docker status
+      service:
+        name: docker
+        state: started
+        enabled: yes
 
 - name: Master Node Setup
   hosts: master_nodes
@@ -201,73 +156,70 @@
   become_method: sudo
   gather_facts: yes
   vars:
-    remote_joincluster_sh: /joincluster.sh
+    pod_network_cidr: 192.168.0.0/16
+    custom_resource_remote_src: /tmp/calico-custom-resource.yaml
+    join_cluster_remote_src: /tmp/joincluster
   tasks:
 
-    - name: Pull required containers
-      command: kubeadm config images pull
-    
     - name: Initialize kubernetes cluster
-      command: kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address={{ hostvars[item]['ansible_ssh_host'] }}
-      with_items: "{{ ansible_play_batch }}"
+      command: kubeadm init --apiserver-advertise-address="{{ ansible_ssh_host }}" --apiserver-cert-extra-sans="{{ ansible_ssh_host }}" --node-name {{ ansible_hostname }} --pod-network-cidr={{ pod_network_cidr }}
 
-    - name: Deploy calico network
-      command: kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/tigera-operator.yaml
-      register: deploy_calico_network
-    
+    - name: Setup kubeconfig for {{ ansible_user }} user
+      command: "{{ item }}"
+      with_items:
+      - mkdir -p /home/{{ ansible_user }}/.kube
+      - cp -i /etc/kubernetes/admin.conf /home/{{ ansible_user }}/.kube/config
+      - chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
+
+    - name: Install calico pod network
+      become: false
+      command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/tigera-operator.yaml
+      register: install_calico_pod_network
+
+    - name: Copy calico custom resource
+      template:
+        src: calico-custom-resource.yaml.j2
+        dest: "{{ custom_resource_remote_src }}"
+
+    - name: Install custom resource pod network
+      become: false
+      command: kubectl create -f {{ custom_resource_remote_src }}
+      register: install_calico_custom_resource
+      when: install_calico_pod_network is succeeded
+
     - name: Generate and save cluster join command
       command: kubeadm token create --print-join-command
       register: join_cluster_command
-      when: deploy_calico_network is succeeded
+      when: install_calico_custom_resource is succeeded
 
     - name: Save join command to file
       template:
-        src: joincluster.sh.j2
-        dest: "{{ remote_joincluster_sh }}"
+        src: joincluster.j2
+        dest: "{{ join_cluster_remote_src }}"
       when: join_cluster_command is succeeded
 
     - name: Fetch joincluster into local file
       fetch:
-        src: "{{ remote_joincluster_sh }}"
-        dest: files/joincluster.sh
+        src: "{{ join_cluster_remote_src }}"
+        dest: files/joincluster
         flat: yes
-
-    - name: Create ~/.kube directory
-      file:
-        path: "/home/{{ ansible_user }}/.kube"
-        state: directory
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0755"
-    
-    - name: Setup kubectl
-      command: "cp -i /etc/kubernetes/admin.conf /home/{{ ansible_user }}/.kube/config"
-
-    - name: Fetch kubernetes config into local file
-      fetch:
-        src: "/home/{{ ansible_user }}/.kube/config"
-        dest: ../config.yaml
-        flat: yes
-    
-    - name: Set ownership for ~/.kube/config
-      file:
-        path: "/home/{{ ansible_user }}/.kube/config"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0644"
 
 - name: Worker Node Setup
   hosts: worker_nodes
   become: yes
   become_method: sudo
   gather_facts: yes
+  vars:
+    join_cluster_remote_src: /tmp/joincluster
   tasks:
     
-    - name: Joining cluster
+    - name: Copy the join command to server location
       copy:
-        src: joincluster.sh
-        dest: joincluster.sh
-        mode: u+x
+        src: joincluster
+        dest: "{{ join_cluster_remote_src }}"
+        mode: 0777
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
     
-    - name: Execute joincluster.sh
-      command: ./joincluster.sh
+    - name: Join the node to cluster
+      command: sh {{ join_cluster_remote_src }}
