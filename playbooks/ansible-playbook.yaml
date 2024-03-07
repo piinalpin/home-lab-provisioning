@@ -57,8 +57,9 @@
           net.bridge.bridge-nf-call-ip6tables = 1
           net.bridge.bridge-nf-call-iptables = 1
         create: yes
-      notify:
-        - Apply kernel settings
+
+    - name: Apply kernel settings
+      command: sysctl --system
     
     - name: Remove package not needed anymore
       apt:
@@ -137,13 +138,29 @@
         path: /etc/docker
         state: directory
 
-    - name: Configure docker daemon
+    - name: Configure docker daemon and containerd
       copy:
-        src: docker-daemon.json
-        dest: /etc/docker/daemon.json
-      notify:
-        - Reload systemd daemon
-        - Enable and start docker
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { src: docker-daemon.json, dest: /etc/docker/daemon.json }
+        - { src: config.toml, dest: /etc/containerd/config.toml }
+        - { src: crictl.yaml, dest: /etc/crictl.yaml }
+    
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable and start containerd
+      service:
+        name: containerd
+        state: restarted
+        enabled: yes
+    
+    - name: Enable and start docker
+      service:
+        name: docker
+        state: restarted
+        enabled: yes
 
     - name: Install kubernetes packages
       apt:
@@ -152,17 +169,91 @@
           - kubeadm=1.29.*
           - kubectl=1.29.*
         state: present
-
-  handlers:
     
-    - name: Apply kernel settings
-      command: sysctl --system
-
-    - name: Reload systemd daemon
-      command: systemctl daemon-reload
+    - name: Update DNS configuration in resolved.conf
+      lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: "^#?DNS="
+        line: "DNS=8.8.8.8"
+        state: present
     
-    - name: Enable and start docker
+    - name: Restart systemd-resolved service
       service:
-        name: docker
-        state: started
-        enabled: yes
+        name: systemd-resolved
+        state: restarted
+    
+    - name: Configure SSH
+      copy:
+        src: k8s
+        dest: "{{ ansible_user_dir }}/.ssh/id_rsa"
+        mode: "0600"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+    
+    - name: Add SSH public key into authorized_keys
+      authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ lookup('file', 'k8s.pub') }}"
+
+- name: Master Node Setup
+  hosts: master_nodes
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  tasks:
+
+    - name: Pull required containers
+      command: kubeadm config images pull
+    
+    - name: Initialize kubernetes cluster
+      command: kubeadm init --pod-network-cidr 10.244.0.0/16 --apiserver-advertise-address={{ hostvars[item]['ansible_ssh_host'] }}
+      with_items: "{{ ansible_play_batch }}"
+
+    - name: Deploy calico network
+      command: kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://docs.projectcalico.org/v3.18/manifests/calico.yaml
+      register: deploy_calico_network
+    
+    - name: Generate and save cluster join command
+      command: kubeadm token create --print-join-command > joincluster.sh
+      register: join_cluster_command
+      when: deploy_calico_network is succeeded
+
+    - name: Fetch joincluster into local file
+      fetch:
+        src: joincluster.sh
+        dest: files/joincluster.sh
+        flat: yes
+
+    - name: Create ~/.kube directory
+      file:
+        path: "{{ ansible_user_dir }}/.kube"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+    
+    - name: Setup kubectl
+      command: "cp -i /etc/kubernetes/admin.conf {{ ansible_user_dir }}/.kube/config"
+    
+    - name: Set ownership for ~/.kube/config
+      file:
+        path: "{{ ansible_user_dir }}/.kube./config"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+
+- name: Worker Node Setup
+  hosts: worker_nodes
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  tasks:
+    
+    - name: Joining cluster
+      copy:
+        src: joincluster.sh
+        dest: joincluster.sh
+        mode: u+x
+    
+    - name: Execute joincluster.sh
+      command: ./joincluster.sh

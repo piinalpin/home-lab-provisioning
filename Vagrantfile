@@ -7,6 +7,7 @@ Vagrant.configure(2) do |config|
     # Configure box
     config.vm.box = IMAGE_NAME
     config.vm.box_check_update = false
+    config.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", disabled: true
 
     # Provision Master Node
     config.vm.define "master" do |master|
@@ -24,7 +25,7 @@ Vagrant.configure(2) do |config|
     # Provision worker nodes
     WORKER_NODE_IPS.each_with_index do |node_ip, index|
         hostname = "worker-#{'%02d' % (index + 1)}"
-        forwarded_port = (MASTER_SSH_FORWARDED_PORT + index)
+        forwarded_port = MASTER_SSH_FORWARDED_PORT + index + 1
         config.vm.define "#{hostname}" do |worker|
             worker.vm.provider "virtualbox" do |v|
                 v.memory = 2048
