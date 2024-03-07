@@ -242,6 +242,12 @@
     
     - name: Setup kubectl
       command: "cp -i /etc/kubernetes/admin.conf /home/{{ ansible_user }}/.kube/config"
+
+    - name: Fetch kubernetes config into local file
+      fetch:
+        src: "/home/{{ ansible_user }}/.kube/config"
+        dest: ../config.yaml
+        flat: yes
     
     - name: Set ownership for ~/.kube/config
       file:
