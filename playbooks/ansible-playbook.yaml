@@ -185,7 +185,7 @@
     - name: Configure SSH
       copy:
         src: k8s
-        dest: "{{ ansible_user_dir }}/.ssh/id_rsa"
+        dest: "/home/{{ ansible_user }}/.ssh/id_rsa"
         mode: "0600"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
@@ -200,44 +200,52 @@
   become: yes
   become_method: sudo
   gather_facts: yes
+  vars:
+    remote_joincluster_sh: /joincluster.sh
   tasks:
 
     - name: Pull required containers
       command: kubeadm config images pull
     
     - name: Initialize kubernetes cluster
-      command: kubeadm init --pod-network-cidr 10.244.0.0/16 --apiserver-advertise-address={{ hostvars[item]['ansible_ssh_host'] }}
+      command: kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address={{ hostvars[item]['ansible_ssh_host'] }}
       with_items: "{{ ansible_play_batch }}"
 
     - name: Deploy calico network
-      command: kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://docs.projectcalico.org/v3.18/manifests/calico.yaml
+      command: kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/tigera-operator.yaml
       register: deploy_calico_network
     
     - name: Generate and save cluster join command
-      command: kubeadm token create --print-join-command > joincluster.sh
+      command: kubeadm token create --print-join-command
       register: join_cluster_command
       when: deploy_calico_network is succeeded
 
+    - name: Save join command to file
+      template:
+        src: joincluster.sh.j2
+        dest: "{{ remote_joincluster_sh }}"
+      when: join_cluster_command is succeeded
+
     - name: Fetch joincluster into local file
       fetch:
-        src: joincluster.sh
+        src: "{{ remote_joincluster_sh }}"
         dest: files/joincluster.sh
         flat: yes
 
     - name: Create ~/.kube directory
       file:
-        path: "{{ ansible_user_dir }}/.kube"
+        path: "/home/{{ ansible_user }}/.kube"
         state: directory
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: "0755"
     
     - name: Setup kubectl
-      command: "cp -i /etc/kubernetes/admin.conf {{ ansible_user_dir }}/.kube/config"
+      command: "cp -i /etc/kubernetes/admin.conf /home/{{ ansible_user }}/.kube/config"
     
     - name: Set ownership for ~/.kube/config
       file:
-        path: "{{ ansible_user_dir }}/.kube./config"
+        path: "/home/{{ ansible_user }}/.kube/config"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: "0644"

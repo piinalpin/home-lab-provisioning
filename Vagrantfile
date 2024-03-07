@@ -20,6 +20,7 @@ Vagrant.configure(2) do |config|
         master.vm.hostname = "master"
         master.vm.network "private_network", ip: MASTER_NODE_IP
         master.vm.network "forwarded_port", guest: 22, host: MASTER_SSH_FORWARDED_PORT, auto_correct: true
+        master.vm.network "forwarded_port", guest: 6443, host: 6443, auto_correct: true
     end
 
     # Provision worker nodes
