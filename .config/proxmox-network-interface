@@ -20,8 +20,8 @@ iface wlp3s0 inet static
     address 192.168.1.4/24
     netmask 255.255.255.0
     gateway 192.168.1.1
-    wpa-ssid "YOUR SSID"
-    wpa-psk "YOUR PASSWORD"
+    wpa-ssid "<YOUR SSID>"
+    wpa-psk "<YOUR PASSWORD>"
     
     post-up echo 1 > /proc/sys/net/ipv4/ip_forward
     
