@@ -1,7 +1,7 @@
 IMAGE_NAME = "ubuntu/focal64"
-MASTER_NODE_IP = "192.168.56.2"
+MASTER_NODE_IP = "192.168.58.2"
 MASTER_SSH_FORWARDED_PORT = 2722
-WORKER_NODE_IPS = ["192.168.56.3", "192.168.56.4"]
+WORKER_NODE_IPS = ["192.168.58.3", "192.168.58.4"]
 
 Vagrant.configure(2) do |config|
     # Configure box
