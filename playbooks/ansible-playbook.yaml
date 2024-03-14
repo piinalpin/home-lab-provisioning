@@ -156,7 +156,6 @@
   become_method: sudo
   gather_facts: yes
   vars:
-    pod_network_cidr: 192.168.0.0/16
     custom_resource_remote_src: /tmp/calico-custom-resource.yaml
     join_cluster_remote_src: /tmp/joincluster
   tasks:
