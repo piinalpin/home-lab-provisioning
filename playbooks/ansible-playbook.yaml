@@ -76,7 +76,7 @@
         state: restarted
         enabled: yes
 
-    - name: Add vagrant user to docker group
+    - name: Add current user to docker group
       user:
         name: "{{ ansible_user }}"
         groups: docker
