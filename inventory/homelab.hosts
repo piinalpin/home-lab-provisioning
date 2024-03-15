@@ -5,7 +5,7 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 k8s-master ansible_ssh_host=192.168.56.10 ansible_ssh_port=22 ansible_user=k8s ansible_ssh_private_key_file=.ssh/homelab node_ip=192.168.56.10
 
 [master_nodes:vars]
-pod_network_cidr=192.168.56.0/24
+pod_network_cidr=192.168.0.0/16
 
 [worker_nodes]
 k8s-node-1 ansible_ssh_host=192.168.56.20 ansible_ssh_port=22 ansible_user=k8s ansible_ssh_private_key_file=.ssh/homelab node_ip=192.168.56.20

@@ -61,10 +61,10 @@ resource "proxmox_vm_qemu" "srv-k8s-nodes" {
   clone = "ubuntu-cloud-init"
 
   agent = 1
-  cores = 1
+  cores = 2
   sockets = 1
   cpu = "host"
-  memory = 2048
+  memory = 4096
 
   bootdisk = "scsi0"
   scsihw = "virtio-scsi-pci"
