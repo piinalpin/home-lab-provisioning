@@ -113,7 +113,6 @@
       - mkdir -p /home/{{ ansible_user }}/.kube
       - cp -i /etc/rancher/k3s/k3s.yaml /home/{{ ansible_user }}/.kube/config
       - chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
-      - chmod 400 /home/{{ ansible_user }}/.kube/config
   
   handlers:
     - name: Check k3s.service status
