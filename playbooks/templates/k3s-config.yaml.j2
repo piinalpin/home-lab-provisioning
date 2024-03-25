@@ -1,0 +1,11 @@
+write-kubeconfig-mode: '0644'
+tls-san:
+  - {{ k3s_master_ip }}
+  - k8s-master.piinalpin.lab
+disable:
+  - traefik
+  - servicelb
+  - local-storage
+token: {{ k3s_token }}
+docker: true
+cluster-init: true

@@ -1,0 +1,162 @@
+- name: Setup Kubernetes Environment
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  tasks:
+
+    - name: Remove generated ubuntu hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: "ubuntu-*"
+        state: absent
+        backup: yes
+
+    - name: Remove generated hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: ".* {{ hostvars[item]['ansible_hostname']}} {{ hostvars[item]['ansible_hostname']}}"
+        state: absent
+        backup: yes
+      with_items: "{{ ansible_play_batch }}"
+
+    - name: Update hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: ".*\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
+        line: "{{ hostvars[item]['ansible_ssh_host'] }}\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}.local"
+        state: present
+        backup: yes
+      with_items: "{{ ansible_play_batch }}"
+
+    - name: Install packages that allow apt to be used over HTTPS
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Add an apt signing key for Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add apt repository for stable version
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+        state: present
+        filename: docker
+        update_cache: yes
+
+    - name: Install docker and dependecies
+      apt: 
+        name:
+          - docker-ce 
+          - docker-ce-cli 
+          - containerd.io
+        state: present
+        update_cache: yes
+      notify: Check docker status
+
+    - name: Configure containerd config
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { src: config.toml, dest: /etc/containerd/config.toml }
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable and start containerd
+      service:
+        name: containerd
+        state: restarted
+        enabled: yes
+
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+  handlers:
+    - name: Check docker status
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+- name: Master Node Setup
+  hosts: master_nodes
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  tasks:
+
+    - name: Copy k3s cluster config
+      template:
+        src: k3s-config.yaml.j2
+        dest: "{{ k3s_config_file }}"
+
+    - name: Initialize kubernetes cluster
+      shell: curl -sfL https://get.k3s.io | K3S_CONFIG_FILE={{ k3s_config_file }} sh -s -
+
+    - name: Setup kubeconfig for {{ ansible_user }} user
+      command: "{{ item }}"
+      with_items:
+      - rm -rf /home/{{ ansible_user }}/.kube
+      - mkdir -p /home/{{ ansible_user }}/.kube
+      - cp -i /etc/rancher/k3s/k3s.yaml /home/{{ ansible_user }}/.kube/config
+      - chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
+      - chmod 400 /home/{{ ansible_user }}/.kube/config
+    
+    - name: Add Helm GPG key
+      apt_key:
+        url: https://baltocdn.com/helm/signing.asc
+        state: present
+
+    - name: Add helm apt repository for stable version
+      apt_repository:
+        repo: deb https://baltocdn.com/helm/stable/debian/ all main
+        state: present
+        filename: helm
+        update_cache: yes
+
+    - name: Installing Helm
+      apt:
+        name:
+          - helm
+        state: present
+        update_cache: yes
+  
+  handlers:
+    - name: Check k3s.service status
+      service:
+        name: k3s.service
+        state: started
+        enabled: yes
+
+    - name: Check Helm version
+      command: helm version
+
+- name: Worker Node Setup
+  hosts: worker_nodes
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  tasks:
+    
+    - name: Join the node to cluster
+      shell: curl -sfL https://get.k3s.io | K3S_TOKEN={{ k3s_token }} K3S_URL=https://{{ k3s_master_ip }}:6443 sh -s - --docker
+    
+  handlers:
+  - name: Check k3s-agent.service status
+    service:
+      name: k3s-agent.service
+      state: started
+      enabled: yes

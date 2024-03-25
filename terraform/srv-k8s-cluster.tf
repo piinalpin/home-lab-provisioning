@@ -20,7 +20,7 @@ resource "proxmox_vm_qemu" "srv-k8s-master" {
 
   os_type = "cloud-init"
   ipconfig0 = "ip=${var.ci_k8s_base_master_ip}${count.index}/${var.ci_network_cidr},gw=${var.ci_ip_gateway}"
-  nameserver = "8.8.8.8 8.8.4.4"
+  nameserver = "8.8.8.8 8.8.4.4 192.168.56.1"
   searchdomain = "piinalpin.lab"
   ciuser = var.ci_user
   cipassword = var.ci_password
@@ -73,7 +73,7 @@ resource "proxmox_vm_qemu" "srv-k8s-nodes" {
 
   os_type = "cloud-init"
   ipconfig0 = "ip=${var.ci_k8s_base_node_ip}${count.index}/${var.ci_network_cidr},gw=${var.ci_ip_gateway}"
-  nameserver = "8.8.8.8 8.8.4.4"
+  nameserver = "8.8.8.8 8.8.4.4 192.168.56.1"
   searchdomain = "piinalpin.lab"
   ciuser = var.ci_user
   cipassword = var.ci_password
