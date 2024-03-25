@@ -114,25 +114,6 @@
       - cp -i /etc/rancher/k3s/k3s.yaml /home/{{ ansible_user }}/.kube/config
       - chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
       - chmod 400 /home/{{ ansible_user }}/.kube/config
-    
-    - name: Add Helm GPG key
-      apt_key:
-        url: https://baltocdn.com/helm/signing.asc
-        state: present
-
-    - name: Add helm apt repository for stable version
-      apt_repository:
-        repo: deb https://baltocdn.com/helm/stable/debian/ all main
-        state: present
-        filename: helm
-        update_cache: yes
-
-    - name: Installing Helm
-      apt:
-        name:
-          - helm
-        state: present
-        update_cache: yes
   
   handlers:
     - name: Check k3s.service status
@@ -140,9 +121,6 @@
         name: k3s.service
         state: started
         enabled: yes
-
-    - name: Check Helm version
-      command: helm version
 
 - name: Worker Node Setup
   hosts: worker_nodes
