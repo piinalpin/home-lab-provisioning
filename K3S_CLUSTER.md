@@ -74,7 +74,8 @@ Pull `nginx-ingress`
 helm repo add nginx-stable https://helm.nginx.com/stable
 helm repo add bitnami https://charts.bitnami.com/bitnami
 ```
-Check repo
+
+Check repository
 ```bash
 helm search repo nginx
 helm pull nginx-stable/nginx-ingress -d .helm --untar
@@ -104,7 +105,6 @@ ingressClass:
 ```
 
 ```bash
-# cd .helm/nginx-stable
 helm -n ingress install nginx-ingress -f .helm/nginx-ingress/values.yaml .helm/nginx-ingress/ --debug --create-namespace
 ```
 
