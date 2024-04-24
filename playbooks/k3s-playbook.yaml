@@ -98,13 +98,19 @@
   gather_facts: yes
   tasks:
 
+    - name: Create k3s config directory
+      command: "{{ item }}"
+      with_items:
+      - rm -rf /home/{{ ansible_user }}/.k3s
+      - mkdir -p /home/{{ ansible_user }}/.k3s
+
     - name: Copy k3s cluster config
       template:
         src: k3s-config.yaml.j2
-        dest: "{{ k3s_config_file }}"
+        dest: /home/{{ ansible_user }}/.k3s/cluster-config.yaml
 
     - name: Initialize kubernetes cluster
-      shell: curl -sfL https://get.k3s.io | K3S_CONFIG_FILE={{ k3s_config_file }} sh -s -
+      shell: curl -sfL https://get.k3s.io | K3S_CONFIG_FILE=/home/{{ ansible_user }}/.k3s/cluster-config.yaml sh -s -
 
     - name: Setup kubeconfig for {{ ansible_user }} user
       command: "{{ item }}"
