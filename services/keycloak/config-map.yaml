@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak
+  namespace: keycloak
+data:
+  KEYCLOAK_ADMIN: admin
+  KEYCLOAK_ADMIN_PASSWORD: XjOGSTLGeT1g
+  KC_DB: postgres
+  KC_DB_SCHEMA: keycloak
+  KC_DB_URL: jdbc:postgresql://postgresql:5432/gorkita
+  KC_DB_USERNAME: postgres
+  KC_DB_PASSWORD: gWl7Jj3eZbFEhBqg
