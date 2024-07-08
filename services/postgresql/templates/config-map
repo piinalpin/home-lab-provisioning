@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-config
+  namespace: {{ .Release.Namespace }}
+data:
+  PGDATA: /var/lib/postgresql/data
+  POSTGRES_DB: {{ .Values.credentials.dbName }}
+  POSTGRES_USER: {{ .Values.credentials.dbUser }}
