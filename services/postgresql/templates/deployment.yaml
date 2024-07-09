@@ -1,28 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.nameOverride }}
+  name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Values.nameOverride }}
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.nameOverride }}
+        app: {{ .Release.Name }}
     spec:
       containers:
-        - name: {{ .Values.nameOverride }}
+        - name: {{ .Release.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 5432
           envFrom:
             - configMapRef:
-                name: postgresql-config
+                name: "{{ .Release.Name }}-config"
             - secretRef:
-                name: postgresql-secret
+                name: "{{ .Release.Name }}-secret"
           volumeMounts:
             - name: postgresql-data
               mountPath: /var/lib/postgresql/data
