@@ -5,7 +5,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   type: {{ .Values.service.type }}
-  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
   selector:
     app: {{ .Release.Name }}
   ports:
