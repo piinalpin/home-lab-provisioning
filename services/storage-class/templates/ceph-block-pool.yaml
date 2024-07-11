@@ -1,0 +1,10 @@
+apiVersion: ceph.rook.io/v1
+kind: CephBlockPool
+metadata:
+  name: {{ .Values.storage.poolName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  failureDomain: host
+  replicated:
+    size: {{ .Values.storage.replicaCount }}
+    requireSafeReplicaSize: {{ .Values.storage.requireSafeReplicaSize }}

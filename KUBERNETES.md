@@ -18,3 +18,34 @@ Add hosts in `/etc/hosts`
 ```bash
 192.168.56.101	keycloak.piinalpin.lab
 ```
+
+### Deploy Monitoring
+
+#### Install monitoring config
+- Persistence Volume
+- Grafana ingress
+
+```bash
+helm -n monitoring install monitoring-config ./service/monitoring/00-config --create-namespace
+```
+
+#### Deploy Kube Prometheus Grafana
+- Prometheus
+- Grafana
+- Alert Monitoring
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 
+helm repo update
+helm -n monitoring install kube-prometheus prometheus-community/kube-prometheus-stack -f .service/monitoring/kube-prom/values.yaml --create-namespace
+```
+
+Login grafana with username `admin` and password `prom-operator`
+
+#### Deploy loki
+
+```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm -n monitoring install loki-stack grafana/loki-stack -f ./service/loki-stack/values.yaml --create-namespace
+```

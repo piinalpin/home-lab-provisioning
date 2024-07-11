@@ -1,0 +1,4 @@
+storage:
+  poolName: replicapool
+  replicaCount: 3
+  requireSafeReplicaSize: true

@@ -1,0 +1,19 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rook-ceph-block
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: {{ .Release.Namespace }} 
+  pool: {{ .Values.storage.poolName }}
+  imageFormat: "2"
+  imageFeatures: layering
+  provisioner-secret-name: rook-csi-rbd-provisioner
+  provisioner-secret-namespace: {{ .Release.Namespace }}
+  controller-expand-secret-name: rook-csi-rbd-provisioner
+  controller-expand-secret-namespace: {{ .Release.Namespace }}
+  node-stage-secret-name: rook-csi-rbd-node
+  node-stage-secret-namespace: {{ .Release.Namespace }}
+  fstype: ext4
+allowVolumeExpansion: true
+reclaimPolicy: Delete
