@@ -1,0 +1,17 @@
+{{- range .Values.grafanaStorage }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .name }}-pvc"
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .storage }}
+---
+{{- end }}
