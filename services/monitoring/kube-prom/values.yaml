@@ -67,6 +67,19 @@ grafana:
       - ReadWriteOnce
     size: 10Gi
     storageClassName: "rook-ceph-block"
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-prometheus.monitoring.svc.cluster.local:9090
+          access: proxy
+          isDefault: true # Optionally set this to make it the default datasource
+        - name: Alertmanager
+          type: prometheus
+          url: http://alertmanager-prometheus.monitoring.svc.cluster.local:9093
+          access: proxy
 
 alertmanager:
   enabled: true
