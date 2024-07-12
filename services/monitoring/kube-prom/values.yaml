@@ -39,7 +39,7 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 10Gi
+              storage: 15Gi
           storageClassName: "rook-ceph-block"
     securityContext:
       fsGroup: 2000
@@ -57,6 +57,8 @@ prometheus:
 
 grafana:
   enabled: true
+  image:
+    tag: 11.1.0
   fullnameOverride: grafana
   defaultDashboardsTimezone: Asia/Jakarta
   serviceMonitor:
@@ -67,19 +69,6 @@ grafana:
       - ReadWriteOnce
     size: 10Gi
     storageClassName: "rook-ceph-block"
-  datasources:
-    datasources.yaml:
-      apiVersion: 1
-      datasources:
-        - name: Prometheus
-          type: prometheus
-          url: http://prometheus-prometheus.monitoring.svc.cluster.local:9090
-          access: proxy
-          isDefault: true # Optionally set this to make it the default datasource
-        - name: Alertmanager
-          type: prometheus
-          url: http://alertmanager-prometheus.monitoring.svc.cluster.local:9093
-          access: proxy
 
 alertmanager:
   enabled: true
@@ -91,7 +80,7 @@ alertmanager:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 10Gi
+              storage: 100Mi
           storageClassName: "rook-ceph-block"
 
 prometheus-node-exporter:

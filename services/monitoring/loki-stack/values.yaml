@@ -4,9 +4,12 @@ test_pod:
   pullPolicy: IfNotPresent
 
 loki:
+  image:
+    tag: 2.9.3
   enabled: true
   isDefault: true
   url: http://{{(include "loki.serviceName" .)}}:{{ .Values.loki.service.port }}
+  storage: filesystem
   readinessProbe:
     httpGet:
       path: /ready
@@ -20,7 +23,13 @@ loki:
   datasource:
     jsonData: "{}"
     uid: ""
-
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
 
 promtail:
   enabled: true
@@ -29,6 +38,13 @@ promtail:
     serverPort: 3101
     clients:
       - url: http://{{ .Release.Name }}:3100/loki/api/v1/push
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
 
 fluent-bit:
   enabled: false
@@ -42,14 +58,31 @@ grafana:
       enabled: true
       maxLines: 1000
   image:
-    tag: 8.3.5
+    tag: 11.1.0
+  persistence:
+    enabled: true
+    storageClassName: rook-ceph-block
+    accessModes:
+      - ReadWriteOnce
+    size: 15Gi
 
+    
 prometheus:
   enabled: false
   isDefault: false
   url: http://{{ include "prometheus.fullname" .}}:{{ .Values.prometheus.server.service.servicePort }}{{ .Values.prometheus.server.prefixURL }}
   datasource:
     jsonData: "{}"
+  server:
+    persistentVolume:
+      enabled: false
+  alertmanager:
+    persistence:
+      enabled: true
+      storageClass: rook-ceph-block
+      accessModes:
+        - ReadWriteOnce
+      size: 100Mi
 
 filebeat:
   enabled: false

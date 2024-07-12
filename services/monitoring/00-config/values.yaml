@@ -1,14 +1,14 @@
 grafanaStorage:
-  - name: data-01
-    hostPath: /home/k8s/monitoring/data-01
-    capacity: 10Gi
+  - name: prometheus
+    hostPath: /home/k8s/monitoring
+    capacity: 15Gi
     storageClassName: rook-ceph-block
-  - name: data-02
-    hostPath: /home/k8s/monitoring/data-02
-    capacity: 10Gi
+  - name: alertmanager
+    hostPath: /home/k8s/monitoring
+    capacity: 100Mi
     storageClassName: rook-ceph-block
-  - name: data-03
-    hostPath: /home/k8s/monitoring/data-03
+  - name: grafana
+    hostPath: /home/k8s/monitoring
     capacity: 10Gi
     storageClassName: rook-ceph-block
 
