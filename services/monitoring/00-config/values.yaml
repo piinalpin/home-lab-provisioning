@@ -25,4 +25,10 @@ ingress:
           pathType: Prefix
           port: 80
           serviceName: grafana
+    - host: prometheus.piinalpin.lab
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 9090
+          serviceName: prometheus-prometheus
   tls: []

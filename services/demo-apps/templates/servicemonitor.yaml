@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+ name: "{{ .Release.Name }}-monitor"
+ namespace: {{ .Release.Namespace }}
+spec:
+ selector:
+   matchLabels:
+     app: {{ .Release.Name }}
+     app.kubernetes.io/part-of: {{ .Release.Name }}
+ namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+ endpoints:
+   - port: "{{ .Values.service.port }}"
+     path: "/actuator/prometheus"

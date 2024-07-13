@@ -32,28 +32,35 @@ defaultRules:
 prometheus:
   enabled: true
   prometheusSpec:
-    shards: 0
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 15Gi
-          storageClassName: "rook-ceph-block"
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 15Gi
+        storageClassName: "rook-ceph-block"
     securityContext:
       fsGroup: 2000
       runAsGroup: 2000
       runAsNonRoot: true
       runAsUser: 1000
-    initContainers:        
-      - command: ["chown","-R","1000:2000","/prometheus"]
-        image: busybox
-        name: prometheus-data-permission-fix
-        volumeMounts:
-        - mountPath: /prometheus
-          name: prometheus-prometheus-prometheus-db-prometheus-data
-          subPath: prometheus-db
+      seccompProfile:
+        type: RuntimeDefault
+  additionalScrapeConfigs: 
+    - job_name: blackbox
+      metrics_path: /probe
+      params:
+        module: [http_2xx]
+      static_configs:
+        - targets:
+          - http://192.168.56.103:8080//actuator/health  
+      relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter-prometheus-blackbox-exporter:9115
 
 grafana:
   enabled: true
