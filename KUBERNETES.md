@@ -47,5 +47,11 @@ Login grafana with username `admin` and password `prom-operator`
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
-helm -n monitoring install loki-stack grafana/loki-stack -f ./service/monitoring/loki-stack/values.yaml --create-namespace
+helm -n monitoring install loki grafana/loki-stack -f ./service/monitoring/loki-stack/values.yaml --create-namespace
+```
+
+### Grafana Dashboard
+```bash
+https://grafana.com/grafana/dashboards/11378-justai-system-monitor/
+https://grafana.com/grafana/dashboards/1860-node-exporter-full/
 ```
