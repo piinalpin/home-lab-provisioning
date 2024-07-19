@@ -67,11 +67,15 @@ resources: {}
 livenessProbe:
   httpGet:
     path: /actuator/health
-    port: http
+    port: 8080
 readinessProbe:
   httpGet:
     path: /actuator/health
-    port: http
+    port: 8080
+  initialDelaySeconds: 30
+  timeoutSeconds: 1
+  periodSeconds: 10
+  failureThreshold: 3
 
 autoscaling:
   enabled: false
