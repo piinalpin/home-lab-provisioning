@@ -51,7 +51,10 @@ prometheus:
         metrics_path: /actuator/prometheus
         scrape_interval: 10s
         static_configs:
-          - targets: ['192.168.56.103:8080']
+          - targets: 
+            - 192.168.56.103:8080
+            - 192.168.56.104:8080
+            - 192.168.56.105:8080
             labels:
               application: Demo Spring Boot Application
 
