@@ -54,4 +54,5 @@ helm -n monitoring install loki grafana/loki-stack -f ./service/monitoring/loki-
 ```bash
 https://grafana.com/grafana/dashboards/11378-justai-system-monitor/
 https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+https://grafana.com/grafana/dashboards/13659-blackbox-exporter-http-prober/
 ```
