@@ -46,6 +46,10 @@ prometheus:
       runAsUser: 1000
       seccompProfile:
         type: RuntimeDefault
+    hostAliases:
+    - ip: "192.168.56.101"
+      hostnames:
+        - demo-apps.piinalpin.lab
     additionalScrapeConfigs: 
       - job_name: blackbox
         metrics_path: /probe
@@ -53,9 +57,9 @@ prometheus:
           module: [http_2xx]
         static_configs:
           - targets:
-            - http://192.168.56.103:8080/actuator/health
-            - http://192.168.56.104:8080/actuator/health
-            - http://192.168.56.105:8080/actuator/health
+            - http://demo-apps.piinalpin.lab/dexter/actuator/health
+            - http://demo-apps.piinalpin.lab/enclave/actuator/health
+            - http://demo-apps.piinalpin.lab/valkyrie/actuator/health
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -63,16 +67,30 @@ prometheus:
             target_label: instance
           - target_label: __address__
             replacement: blackbox-exporter-prometheus-blackbox-exporter:9115
-      - job_name: backend-apps
-        metrics_path: /actuator/prometheus
+      - job_name: dexter-service
+        metrics_path: /dexter/actuator/prometheus
         scrape_interval: 10s
         static_configs:
           - targets: 
-            - 192.168.56.103:8080
-            - 192.168.56.104:8080
-            - 192.168.56.105:8080
+            - demo-apps.piinalpin.lab
             labels:
-              application: Demo Spring Boot Application
+              application: Dexter Service
+      - job_name: enclave-service
+        metrics_path: /enclave/actuator/prometheus
+        scrape_interval: 10s
+        static_configs:
+          - targets: 
+            - demo-apps.piinalpin.lab
+            labels:
+              application: Enclave Service
+      - job_name: devalkyriexter-service
+        metrics_path: /valkyrie/actuator/prometheus
+        scrape_interval: 10s
+        static_configs:
+          - targets: 
+            - demo-apps.piinalpin.lab
+            labels:
+              application: Valkyrie Service
 
 grafana:
   enabled: true

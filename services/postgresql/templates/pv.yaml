@@ -1,13 +1,15 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "{{ .Release.Name }}-pv"
+  name: "{{ .Release.Name }}-storage"
+  labels:
+    app.kubernetes.io/name: "{{ .Release.Name }}-storage"
   namespace: {{ .Release.Namespace }}
 spec:
-  storageClassName: manual
+  storageClassName: {{ .Values.storageClassName }}
   capacity:
-    storage: 5Gi
+    storage: {{ .Values.capacity }}
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /mnt/data
+    path: {{ .Values.hostPath }}

@@ -1,0 +1,11 @@
+{{- range .Values.application}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .name }}-config"
+  namespace: {{ $.Release.Namespace }}
+data:
+  CONTEXT_PATH: ""
+  APPLICATION_NAME: {{ .name }}
+---
+{{- end }}

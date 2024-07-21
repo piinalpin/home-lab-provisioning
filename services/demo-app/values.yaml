@@ -1,0 +1,30 @@
+image:
+  repository: piinalpin/demo-loki-logs
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+application:
+  - name: dexter-service
+    uriPrefix: /dexter
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      port: 8080
+  - name: enclave-service
+    uriPrefix: /enclave
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      port: 8080
+  - name: valkyrie-service
+    uriPrefix: /valkyrie
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      port: 8080
+
+istio:
+  host: demo-app.piinalpin.lab  
+
+resources: {}

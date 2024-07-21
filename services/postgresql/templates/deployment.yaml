@@ -25,9 +25,15 @@ spec:
             - secretRef:
                 name: "{{ .Release.Name }}-secret"
           volumeMounts:
-            - name: postgresql-data
+            - name: "{{ .Release.Name }}-storage"
               mountPath: /var/lib/postgresql/data
+          livenessProbe:
+            {{- toYaml $.Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml $.Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml $.Values.resources | nindent 12 }}
       volumes:
-        - name: postgresql-data
+        - name: "{{ .Release.Name }}-storage"
           persistentVolumeClaim:
-            claimName: postgresql-pvc
+            claimName: "{{ .Release.Name }}-claim"

@@ -1,0 +1,25 @@
+{{- range .Values.application}}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: "{{ .name }}-virtualservice"
+spec:
+  hosts:
+    - {{ $.Values.istio.host }}
+  gateways:
+    - "{{ $.Release.Name }}-gateway"
+  http:
+  - match:
+    - uri:
+        # Add "/" after prefix if want to rewrite root path
+        prefix: {{ .uriPrefix }}/
+    # Rewrite to root path
+    rewrite:
+      uri: "/"
+    route:
+      - destination:
+          port:
+            number: {{ .service.port }}
+          host: {{ .name }}
+---
+{{- end }}

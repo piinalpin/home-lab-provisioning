@@ -1,19 +1,14 @@
 ## Kubernetes Production Ready
 
-### Master Node
-
+Create k3s cluster using terraform and ansible:
 ```bash
-curl -sfL https://get.k3s.io | sh -s - server --token secret --disable traefik --disable servicelb --disable local-storage --docker --write-kubeconfig-mode 644 --tls-san "192.168.56.10" --node-external-ip "192.168.56.10"
+terraform init
+terraform plan
+terraform apply --auto-approve
+ansible-playbook -i inventory/homelab.hosts playbooks/k3s-playbook.yaml
 ```
 
-
-### Worker Node
-
-```bash
-curl -sfL https://get.k3s.io | sh -s - agent --token secret --docker --server https://192.168.56.10:6443
-```
-
-### Install Load Balancer
+### Install Load Balancer (MetalLB)
 
 Install Helm [here](https://helm.sh/docs/intro/install/)
 
@@ -27,143 +22,62 @@ Install `MetalLB`
 helm install metallb metallb/metallb -n metallb-system --create-namespace
 ```
 
-Apply manifest address pool
-```yaml
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: default-pool
-  namespace: metallb-system
-spec:
-  addresses:
-  - 192.168.56.101-192.168.56.254
-```
+Apply manifest address pool, will provide adresses `192.168.56.51-192.168.56.254`
 
 ```bash
-kubectl apply -f .cluster/metallb/ipaddresspool.yaml
+kubectl apply -f .config/cluster/metallb/ipaddresspool.yaml
 ```
 
-Apply manifest L2 Advertisement
-```yaml
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: default
-  namespace: metallb-system
-spec:
-  ipAddressPools:
-  - default-pool
-```
+Apply manifest L2 Advertisement for default pool
 
 ```bash
-kubectl apply -f .cluster/metallb/l2advertisement.yaml
+kubectl apply -f .config/cluster/metallb/l2advertisement.yaml
 ```
 
-Test load balancer
+## Install Istio
+Istio is a service mesh is an infrastructure layer that gives applications capabilities like zero-trust security, observability, and advanced traffic management, without code changes.
+
+Create namespace
 ```bash
-kubectl run app-demo-1 --image=nginx --port=80
-kubectl expose pod app-demo-1 --type=LoadBalancer --targer=80 --port=80 --name app-demo-1
-kubectl get all
-curl http://192.168.56.101
+kubectl create namespace istio-system
 ```
 
-### Ingress
-
-Pull `nginx-ingress`
+Install CRD (Sustom Resource Definition)
 ```bash
-helm repo add nginx-stable https://helm.nginx.com/stable
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install istio-base istio/base -n istio-system --set defaultRevision=default
 ```
 
-Check repository
+Install istio discovery `istiod`
 ```bash
-helm search repo nginx
-helm pull nginx-stable/nginx-ingress -d .helm --untar
+helm install istiod istio/istiod -n istio-system
 ```
 
-Run helm chart
-Modify `.helm/nginx-ingress/values.yaml` set `setAsDefaultIngress` to true
-
-```yaml
-...
-ingressClass:
-  ## A class of the Ingress Controller.
-
-  ## IngressClass resource with the name equal to the class must be deployed. Otherwise,
-  ## the Ingress Controller will fail to start.
-  ## The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
-
-  ## The Ingress Controller processes all the resources that do not have the "ingressClassName" field for all versions of kubernetes.
-  name: nginx
-
-  ## Creates a new IngressClass object with the name "controller.ingressClass.name". Set to false to use an existing IngressClass with the same name. If you use helm upgrade, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.3.0, do not set the value to false.
-  create: true
-
-  ## New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`. Requires "controller.ingressClass.create".
-  setAsDefaultIngress: true
-...
+Enable side car proxy injection
+```bash
+kubectl label namespace default istio-injection=enabled
 ```
+
+Install istio ingress
+```bash
+helm install istio-ingress istio/gateway -n istio-system
+```
+Update `/etc/hosts`
+
+## Install Ceph with Rook
 
 ```bash
-helm -n ingress install nginx-ingress -f .helm/nginx-ingress/values.yaml .helm/nginx-ingress/ --debug --create-namespace
+helm repo add rook-release https://charts.rook.io/release
+helm -n rook-ceph install rook-ceph rook-release/rook-ceph --create-namespace
+kubectl apply -f https://raw.githubusercontent.com/rook/rook/release-1.14/deploy/examples/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/rook/rook/release-1.14/deploy/examples/cluster.yaml
 ```
 
-Pull nginx web server from bitnami
+Installl storage class and ceph block pool
 ```bash
-helm pull bitnami/nginx -d .helm --untar
+helm -n rook-ceph install ceph-block-pool ./service/storage-class -f ./service/storage-class/values.yaml
 ```
 
-Modify `.helm/nginx/values.yaml` set `ingressClassName` and update hostname
-```yaml
-...
-ingress:
-  ## @param ingress.enabled Set to true to enable ingress record generation
-  ##
-  enabled: true
-  ## @param ingress.selfSigned Create a TLS secret for this ingress record using self-signed certificates generated by Helm
-  ##
-  selfSigned: false
-  ## @param ingress.pathType Ingress path type
-  ##
-  pathType: ImplementationSpecific
-  ## @param ingress.apiVersion Force Ingress API version (automatically detected if not set)
-  ##
-  apiVersion: ""
-  ## @param ingress.hostname Default host for the ingress resource
-  ##
-  hostname: nginx.piinalpin.lab
-  ## @param ingress.path The Path to Nginx. You may need to set this to '/*' in order to use this with ALB ingress controllers.
-  ##
-  path: /
-  ## @param ingress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
-  ## For a full list of possible ingress annotations, please see
-  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
-  ## Use this parameter to set the required annotations for cert-manager, see
-  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
-  ##
-  ## e.g:
-  ## annotations:
-  ##   kubernetes.io/ingress.class: nginx
-  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
-  ##
-  annotations: {}
-  ## @param ingress.ingressClassName Set the ingerssClassName on the ingress record for k8s 1.18+
-  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
-  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
-  ##
-  ingressClassName: "nginx"
-  ## @param ingress.tls Create TLS Secret
-  ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.ingress.hostname }}
-  ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
-  ##
-  tls: false
-...
-```
-
-Apply ingress
+Create directory on each virtual machine because we will use local storage
 ```bash
-helm -n demo install demo-app -f .helm/nginx/values.yaml .helm/nginx/ --debug --create-namespace
-kubectl -n demo get ingress
+mkdir -p database/postgresql
 ```
-Update `etc/hosts`
-

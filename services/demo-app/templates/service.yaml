@@ -1,0 +1,21 @@
+{{- range .Values.application}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  type: {{ .service.type }}
+  {{- if .service.loadBalancerIP }}
+  loadBalancerIP: {{ .service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - port: {{ .service.port }}
+      targetPort: {{ .service.port }}
+      protocol: TCP
+  selector:
+    app: {{ .name }}
+---
+{{- end }}

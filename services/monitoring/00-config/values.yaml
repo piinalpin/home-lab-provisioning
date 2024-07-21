@@ -12,23 +12,13 @@ grafanaStorage:
     capacity: 10Gi
     storageClassName: rook-ceph-block
 
-ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /
+istio:
   hosts:
-    - host: grafana.piinalpin.lab
-      paths:
-        - path: /
-          pathType: Prefix
-          port: 80
-          serviceName: grafana
-    - host: prometheus.piinalpin.lab
-      paths:
-        - path: /
-          pathType: Prefix
-          port: 9090
-          serviceName: prometheus-prometheus
-  tls: []
+    - name: grafana
+      host: grafana.piinalpin.lab
+      port: 80
+      serviceName: grafana
+    - name: prometheus
+      host: prometheus.piinalpin.lab
+      port: 9090
+      serviceName: prometheus-prometheus
