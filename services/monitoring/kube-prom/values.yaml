@@ -49,7 +49,7 @@ prometheus:
     hostAliases:
     - ip: "192.168.56.101"
       hostnames:
-        - demo-apps.piinalpin.lab
+        - demo-app.piinalpin.lab
     additionalScrapeConfigs: 
       - job_name: blackbox
         metrics_path: /probe
@@ -57,9 +57,9 @@ prometheus:
           module: [http_2xx]
         static_configs:
           - targets:
-            - http://demo-apps.piinalpin.lab/dexter/actuator/health
-            - http://demo-apps.piinalpin.lab/enclave/actuator/health
-            - http://demo-apps.piinalpin.lab/valkyrie/actuator/health
+            - http://demo-app.piinalpin.lab/dexter/actuator/health
+            - http://demo-app.piinalpin.lab/enclave/actuator/health
+            - http://demo-app.piinalpin.lab/valkyrie/actuator/health
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -72,7 +72,7 @@ prometheus:
         scrape_interval: 10s
         static_configs:
           - targets: 
-            - demo-apps.piinalpin.lab
+            - demo-app.piinalpin.lab
             labels:
               application: Dexter Service
       - job_name: enclave-service
@@ -80,15 +80,15 @@ prometheus:
         scrape_interval: 10s
         static_configs:
           - targets: 
-            - demo-apps.piinalpin.lab
+            - demo-app.piinalpin.lab
             labels:
               application: Enclave Service
-      - job_name: devalkyriexter-service
+      - job_name: valkyrie-service
         metrics_path: /valkyrie/actuator/prometheus
         scrape_interval: 10s
         static_configs:
           - targets: 
-            - demo-apps.piinalpin.lab
+            - demo-app.piinalpin.lab
             labels:
               application: Valkyrie Service
 

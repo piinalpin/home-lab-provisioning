@@ -1,7 +1,7 @@
 hostAliases:
   - ip: "192.168.56.101"
     hostnames:
-      - demo-apps.piinalpin.lab
+      - demo-app.piinalpin.lab
 serviceMonitor:
   enabled: true
   defaults:
@@ -22,11 +22,11 @@ serviceMonitor:
 
   targets:
     - name: dexter-service
-      url: http://demo-apps.piinalpin.lab/dexter/actuator/health
+      url: http://demo-app.piinalpin.lab/dexter/actuator/health
     - name: enclave-service
-      url: http://demo-apps.piinalpin.lab/enclave/actuator/health
+      url: http://demo-app.piinalpin.lab/enclave/actuator/health
     - name: valkyrie-service
-      url: http://demo-apps.piinalpin.lab/valkyrie/actuator/health
+      url: http://demo-app.piinalpin.lab/valkyrie/actuator/health
 #    - name: example                    # Human readable URL that will appear in Prometheus / AlertManager
 #      url: http://example.com/healthz  # The URL that blackbox will scrape
 #      hostname: example.com            # HTTP probes can accept an additional `hostname` parameter that will set `Host` header and TLS SNI
