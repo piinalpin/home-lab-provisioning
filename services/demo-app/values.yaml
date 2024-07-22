@@ -7,22 +7,28 @@ image:
 application:
   - name: dexter-service
     uriPrefix: /dexter
-    replicaCount: 1
+    replicaCount: 2
     service:
       type: ClusterIP
       port: 8080
+      labels: 
+        app: demo-app-backend
   - name: enclave-service
     uriPrefix: /enclave
     replicaCount: 1
     service:
       type: ClusterIP
       port: 8080
+      labels: 
+        app: demo-app-backend
   - name: valkyrie-service
     uriPrefix: /valkyrie
     replicaCount: 1
     service:
       type: ClusterIP
       port: 8080
+      labels: 
+        app: demo-app-backend
 
 istio:
   host: demo-app.piinalpin.lab  

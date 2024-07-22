@@ -67,30 +67,27 @@ prometheus:
             target_label: instance
           - target_label: __address__
             replacement: blackbox-exporter-prometheus-blackbox-exporter:9115
-      - job_name: dexter-service
-        metrics_path: /dexter/actuator/prometheus
-        scrape_interval: 10s
-        static_configs:
-          - targets: 
-            - demo-app.piinalpin.lab
-            labels:
-              application: Dexter Service
-      - job_name: enclave-service
-        metrics_path: /enclave/actuator/prometheus
-        scrape_interval: 10s
-        static_configs:
-          - targets: 
-            - demo-app.piinalpin.lab
-            labels:
-              application: Enclave Service
-      - job_name: valkyrie-service
-        metrics_path: /valkyrie/actuator/prometheus
-        scrape_interval: 10s
-        static_configs:
-          - targets: 
-            - demo-app.piinalpin.lab
-            labels:
-              application: Valkyrie Service
+  additionalServiceMonitors:
+    - name: demo-app-backend-servicemonitor
+      selector:
+        matchLabels:
+          app: demo-app-backend
+      namespaceSelector:
+        matchNames:
+          - default
+      endpoints:
+        - port: http
+          path: /actuator/prometheus
+          interval: 10s
+          relabelings:
+            - sourceLabels: [__meta_kubernetes_service_label_app]
+              targetLabel: application
+              replacement: "$1"
+              action: replace
+            - sourceLabels: [__meta_kubernetes_endpoint_address_target_name]
+              targetLabel: instance
+              replacement: "$1"
+              action: replace
 
 grafana:
   enabled: true

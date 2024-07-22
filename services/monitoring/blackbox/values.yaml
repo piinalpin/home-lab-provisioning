@@ -1,6 +1,6 @@
 hostAliases:
   - ip: "192.168.56.101"
-    hostnames:
+    hostNames:
       - demo-app.piinalpin.lab
 serviceMonitor:
   enabled: true
