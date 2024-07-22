@@ -37,7 +37,7 @@ resource "proxmox_vm_qemu" "srv-k8s-master" {
     scsi {
       scsi0 {
         disk {
-          size = 70
+          size = 50
           storage = "local-lvm"
         }
       }
@@ -90,7 +90,7 @@ resource "proxmox_vm_qemu" "srv-k8s-nodes" {
     scsi {
       scsi0 {
         disk {
-          size = 60
+          size = 40
           storage = "local-lvm"
         }
       }
