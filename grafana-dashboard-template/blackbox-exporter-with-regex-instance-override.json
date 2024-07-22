@@ -20,7 +20,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 13659,
   "graphTooltip": 0,
-  "id": 111,
+  "id": 218,
   "links": [],
   "panels": [
     {
@@ -395,30 +395,30 @@
                 "value": [
                   {
                     "options": {
-                      "pattern": ".*192\\.168\\.56\\.103.*",
+                      "pattern": ".*dexter.*",
                       "result": {
                         "index": 0,
-                        "text": "auth-service"
+                        "text": "dexter-service"
                       }
                     },
                     "type": "regex"
                   },
                   {
                     "options": {
-                      "pattern": ".*192\\.168\\.56\\.104.*",
+                      "pattern": ".*enclave.*",
                       "result": {
                         "index": 1,
-                        "text": "account-service"
+                        "text": "enclave-service"
                       }
                     },
                     "type": "regex"
                   },
                   {
                     "options": {
-                      "pattern": ".*192\\.168\\.56\\.105.*",
+                      "pattern": ".*valkyrie.*",
                       "result": {
                         "index": 2,
-                        "text": "finance-service"
+                        "text": "valkyrie-service"
                       }
                     },
                     "type": "regex"
@@ -936,7 +936,7 @@
       {
         "allValue": ".+",
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -971,6 +971,6 @@
   "timezone": "",
   "title": "Blackbox Exporter (HTTP prober)",
   "uid": "blackbox-exporter",
-  "version": 10,
+  "version": 2,
   "weekStart": ""
 }
