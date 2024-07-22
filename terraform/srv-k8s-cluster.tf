@@ -11,7 +11,7 @@ resource "proxmox_vm_qemu" "srv-k8s-master" {
   cores = 2
   sockets = 1
   cpu = "host"
-  memory = 4096
+  memory = 6144
 
   bootdisk = "scsi0"
   scsihw = "virtio-scsi-pci"
@@ -37,7 +37,7 @@ resource "proxmox_vm_qemu" "srv-k8s-master" {
     scsi {
       scsi0 {
         disk {
-          size = 50
+          size = 70
           storage = "local-lvm"
         }
       }
@@ -90,7 +90,7 @@ resource "proxmox_vm_qemu" "srv-k8s-nodes" {
     scsi {
       scsi0 {
         disk {
-          size = 40
+          size = 60
           storage = "local-lvm"
         }
       }
