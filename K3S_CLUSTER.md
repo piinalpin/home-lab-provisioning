@@ -34,32 +34,20 @@ Apply manifest L2 Advertisement for default pool
 kubectl apply -f .config/cluster/metallb/l2advertisement.yaml
 ```
 
-## Install Istio
-Istio is a service mesh is an infrastructure layer that gives applications capabilities like zero-trust security, observability, and advanced traffic management, without code changes.
-
-Create namespace
+## Install Kong
+Add gateway CRD
 ```bash
-kubectl create namespace istio-system
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
 ```
 
-Install CRD (Sustom Resource Definition)
+Create `gatewayclass` and `gateway`
 ```bash
-helm install istio-base istio/base -n istio-system --set defaultRevision=default
+kubectl apply -f ./config/cluster/kong/gatewayclass.yaml 
 ```
 
-Install istio discovery `istiod`
+Install kong
 ```bash
-helm install istiod istio/istiod -n istio-system
-```
-
-Enable side car proxy injection
-```bash
-kubectl label namespace default istio-injection=enabled
-```
-
-Install istio ingress
-```bash
-helm install istio-ingress istio/gateway -n istio-system
+helm -n kong install kong kong/ingress  --create-namespace
 ```
 Update `/etc/hosts`
 

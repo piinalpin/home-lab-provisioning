@@ -22,7 +22,7 @@ spec:
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .service.port }}
+              containerPort: {{ .service.targetPort }}
               protocol: TCP
           envFrom:
             - configMapRef:

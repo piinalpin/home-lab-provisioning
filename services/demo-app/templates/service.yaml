@@ -13,7 +13,7 @@ spec:
   {{- end }}
   ports:
     - port: {{ .service.port }}
-      targetPort: {{ .service.port }}
+      targetPort: {{ .service.targetPort }}
       protocol: TCP
       name: http
   selector:

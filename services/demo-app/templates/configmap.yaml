@@ -7,5 +7,6 @@ metadata:
 data:
   CONTEXT_PATH: ""
   APPLICATION_NAME: {{ .name }}
+  ANOTHER_SERVICE_INFO_URL: "http://{{ .anotherServiceHost }}.{{ $.Release.Namespace }}.svc.cluster.local:8080/get-another-service-info"
 ---
 {{- end }}

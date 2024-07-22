@@ -1,14 +1,31 @@
-apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
+{{- if .Values.gateway.enabled -}}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
 metadata:
-  name: "{{ .Release.Name }}-gateway"
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-      - {{ .Values.istio.host }}
+  parentRefs:
+  {{- toYaml .Values.gateway.parentRefs | nindent 4 }}
+  hostnames:
+  {{- toYaml .Values.gateway.hostnames | nindent 4 }}
+  rules:
+  {{- range .Values.gateway.rules }}
+    - matches:
+        {{- range .matches }}
+          - path:
+              type: {{ .path.type }}
+              value: {{ .path.value }}
+        {{- end }}
+      backendRefs:
+        {{- range .backendRefs }}
+          - name: {{ .name }}
+            kind: {{ .kind }}
+            port: {{ default 80 .port }}
+        {{- end }}
+  {{- end }}
+{{- end }}

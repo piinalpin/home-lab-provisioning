@@ -5,32 +5,89 @@ image:
   tag: "latest"
 
 application:
-  - name: dexter-service
-    uriPrefix: /dexter
+  - name: dexter
     replicaCount: 2
+    anotherServiceHost: valkyrie
     service:
       type: ClusterIP
-      port: 8080
+      port: 80
+      targetPort: 8080
       labels: 
         app: demo-app-backend
-  - name: enclave-service
-    uriPrefix: /enclave
+  - name: enclave
     replicaCount: 1
+    anotherServiceHost: dexter
     service:
       type: ClusterIP
-      port: 8080
+      port: 80
+      targetPort: 8080
       labels: 
         app: demo-app-backend
-  - name: valkyrie-service
-    uriPrefix: /valkyrie
+  - name: valkyrie
     replicaCount: 1
+    anotherServiceHost: enclave
     service:
       type: ClusterIP
-      port: 8080
+      port: 80
+      targetPort: 8080
       labels: 
         app: demo-app-backend
 
-istio:
-  host: demo-app.piinalpin.lab  
+gateway:
+  enabled: false
+  annotations:
+    konghq.com/strip-path: 'true'
+  parentRefs:
+    - name: kong
+  hostnames:
+    - demo-app.piinalpin.lab
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /dexter
+      backendRefs:
+        - name: dexter
+          kind: Service
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /enclave
+      backendRefs:
+        - name: enclave
+          kind: Service
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /valkyrie
+      backendRefs:
+        - name: valkyrie
+          kind: Service
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    ingress.kubernetes.io/rewrite-target: /
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: demo-app.piinalpin.lab
+      paths:
+        - path: /dexter
+          pathType: Prefix
+          service:
+            name: dexter
+            port: 80
+        - path: /enclave
+          pathType: Prefix
+          service:
+            name: enclave
+            port: 80
+        - path: /valkyrie
+          pathType: Prefix
+          service:
+            name: valkyrie
+            port: 80
 
 resources: {}
