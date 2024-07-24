@@ -5,6 +5,11 @@ Download ubuntu cloud init
 wget https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 ```
 
+Resize image
+```bash
+qemu-img resize jammy-server-cloudimg-amd64.img 10G
+```
+
 Enable qemu agent
 ```bash
 apt install libguestfs-tools
