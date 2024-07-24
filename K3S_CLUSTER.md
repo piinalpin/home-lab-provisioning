@@ -47,7 +47,7 @@ kubectl apply -f ./config/cluster/kong/gatewayclass.yaml
 
 Install kong
 ```bash
-helm -n kong install kong kong/ingress  --create-namespace
+helm -n kong-gateway install kong kong/ingress  --create-namespace
 ```
 Update `/etc/hosts`
 
@@ -56,8 +56,8 @@ Update `/etc/hosts`
 ```bash
 helm repo add rook-release https://charts.rook.io/release
 helm -n rook-ceph install rook-ceph rook-release/rook-ceph --create-namespace
-kubectl apply -f https://raw.githubusercontent.com/rook/rook/release-1.14/deploy/examples/operator.yaml
 kubectl apply -f https://raw.githubusercontent.com/rook/rook/release-1.14/deploy/examples/cluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/rook/rook/release-1.14/deploy/examples/operator.yaml
 ```
 
 Installl storage class and ceph block pool
