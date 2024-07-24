@@ -34,7 +34,7 @@ application:
         app: demo-app-backend
 
 gateway:
-  enabled: false
+  enabled: true
   annotations:
     konghq.com/strip-path: 'true'
   parentRefs:
@@ -65,7 +65,7 @@ gateway:
           kind: Service
 
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations:
     kubernetes.io/ingress.class: nginx

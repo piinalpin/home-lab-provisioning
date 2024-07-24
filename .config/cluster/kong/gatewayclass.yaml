@@ -14,6 +14,9 @@ metadata:
 spec:
   gatewayClassName: kong
   listeners:
-  - name: proxy
+  - allowedRoutes:
+        namespaces:
+          from: All
+    name: proxy
     port: 80
     protocol: HTTP

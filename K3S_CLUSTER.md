@@ -42,12 +42,14 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 
 Create `gatewayclass` and `gateway`
 ```bash
-kubectl apply -f ./config/cluster/kong/gatewayclass.yaml 
+kubectl apply -f ./config/cluster/kong/gatewayclass.yaml
+kubectl apply -f ./config/cluster/kong/kong-cluster-plugin.yaml
 ```
 
 Install kong
 ```bash
 helm -n kong-gateway install kong kong/ingress  --create-namespace
+helm upgrade kong kong/ingress -n kong-gateway --set gateway.serviceMonitor.enabled=true --set gateway.serviceMonitor.labels.release=kube-prometheus
 ```
 Update `/etc/hosts`
 
@@ -56,8 +58,6 @@ Update `/etc/hosts`
 ```bash
 helm repo add rook-release https://charts.rook.io/release
 helm -n rook-ceph install rook-ceph rook-release/rook-ceph --create-namespace
-kubectl apply -f https://raw.githubusercontent.com/rook/rook/release-1.14/deploy/examples/cluster.yaml
-kubectl apply -f https://raw.githubusercontent.com/rook/rook/release-1.14/deploy/examples/operator.yaml
 ```
 
 Installl storage class and ceph block pool

@@ -10,8 +10,14 @@ service:
   type: ClusterIP
   port: 8080
 
-istio:
-  host: keycloak.piinalpin.lab
+gateway:
+  annotations:
+    konghq.com/strip-path: 'true'
+  parentRefs:
+    - name: kong
+      namespace: default
+  hostnames:
+    - keycloak.piinalpin.lab
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
