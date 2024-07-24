@@ -1,8 +1,6 @@
 ### Kubernetes
 
 - `sudo apt update && sudo apt upgrade`
-- `sudo systemctl disable systemd-resolved`
-- `sudo systemctl mask systemd-resolved`
 - install containerd `sudo apt install -y containerd` all vm
 - `sudo mkdir /etc/containerd`
 - `containerd config default | sudo tee /etc/containerd/config.toml` -> can reuse `files/config.toml`
@@ -21,11 +19,11 @@
 - Create directory `/etc/apt/keyrings`
 - Add kubernetes keyring
     ```bash
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     ```
 - Add repo source list
     ```bash
-    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
     ```
 - Install kubernetes
     ```bash

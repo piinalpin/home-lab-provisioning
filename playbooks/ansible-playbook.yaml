@@ -40,32 +40,49 @@
         state: present
         update_cache: yes
 
-    - name: Add an apt signing key for Docker
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
+    - name: Install containerd
+      apt:
+        name: containerd
         state: present
 
-    - name: Add apt repository for stable version
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
-        state: present
-
-    - name: Install docker and dependecies
-      apt: 
-        name:
-          - docker-ce 
-          - docker-ce-cli 
-          - containerd.io
-        state: present
-        update_cache: yes
-      notify: Check docker status
+    - name: Ensure /etc/containerd directory exists
+      file:
+        path: /etc/containerd
+        state: directory
 
     - name: Configure containerd config
       copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
+        force: yes
       with_items:
         - { src: config.toml, dest: /etc/containerd/config.toml }
+
+    - name: Create crictl config
+      copy:
+        dest: /etc/crictl.yaml
+        content: |
+          runtime-endpoint: unix:///var/run/containerd/containerd.sock
+        force: yes
+    
+    - name: Ensure net.ipv4.ip_forward is enabled
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+        reload: yes
+    
+    - name: Create modules-load.d directory
+      file:
+        path: /etc/modules-load.d
+        state: directory
+
+    - name: Create k8s.conf for modules to load
+      copy:
+        dest: /etc/modules-load.d/k8s.conf
+        content: |
+          br_netfilter
+        force: yes
 
     - name: Reload systemd daemon
       command: systemctl daemon-reload
@@ -75,12 +92,6 @@
         name: containerd
         state: restarted
         enabled: yes
-
-    - name: Add current user to docker group
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
     
     - name: Remove swapfile from /etc/fstab
       mount:
@@ -107,11 +118,11 @@
     
     - name: Add kubernetes APT repository key
       shell: >
-        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     
     - name: Add kubernetes repository to sources list
       apt_repository:
-        repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+        repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
         state: present
         filename: kubernetes
         update_cache: yes
@@ -119,36 +130,11 @@
     - name: Install Kubernetes binaries
       apt: 
         name:
-          - kubelet=1.29.*
-          - kubeadm=1.29.*
-          - kubectl=1.29.*
+          - kubelet
+          - kubeadm
+          - kubectl
         state: present
         update_cache: yes
-
-    - name: Ensure /etc/default/kubelet exists
-      file:
-        path: /etc/default/kubelet
-        state: touch
-
-    - name: Configure node ip
-      lineinfile:
-        path: /etc/default/kubelet
-        line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
-        state: present
-
-    - name: Restart kubelet
-      service:
-        name: kubelet
-        state: restarted
-        daemon_reload: yes
-        enabled: yes
-
-  handlers:
-    - name: Check docker status
-      service:
-        name: docker
-        state: started
-        enabled: yes
 
 - name: Master Node Setup
   hosts: master_nodes
@@ -161,7 +147,7 @@
   tasks:
 
     - name: Initialize kubernetes cluster
-      command: kubeadm init --apiserver-advertise-address="{{ ansible_ssh_host }}" --apiserver-cert-extra-sans="{{ ansible_ssh_host }}" --node-name {{ ansible_hostname }} --pod-network-cidr={{ pod_network_cidr }}
+      command: kubeadm init --apiserver-advertise-address="{{ ansible_ssh_host }}" --apiserver-cert-extra-sans="{{ ansible_ssh_host }}" --control-plane-endpoint="{{ ansible_ssh_host }}" --node-name {{ ansible_hostname }} --pod-network-cidr={{ pod_network_cidr }}
 
     - name: Setup kubeconfig for {{ ansible_user }} user
       command: "{{ item }}"
