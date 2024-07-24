@@ -3,9 +3,10 @@ resource "proxmox_vm_qemu" "srv-k8s-master" {
   name = "k8s-master"
   desc = "Kubernetes Master Nodes"
   vmid = var.ci_start_vmid + count.index
-  target_node = "pve"
+  target_node = var.ci_target_node
 
-  clone = "ubuntu-cloud-init"
+  clone = var.ci_template
+  tags = "master"
 
   agent = 1
   cores = 2
@@ -20,8 +21,7 @@ resource "proxmox_vm_qemu" "srv-k8s-master" {
 
   os_type = "cloud-init"
   ipconfig0 = "ip=${var.ci_k8s_base_master_ip}${count.index}/${var.ci_network_cidr},gw=${var.ci_ip_gateway}"
-  nameserver = "8.8.8.8 8.8.4.4 192.168.56.1"
-  searchdomain = "piinalpin.lab"
+  nameserver = "192.168.56.1 8.8.8.8 8.8.4.4"
   ciuser = var.ci_user
   cipassword = var.ci_password
   sshkeys = <<EOF
@@ -56,9 +56,10 @@ resource "proxmox_vm_qemu" "srv-k8s-nodes" {
   name = "k8s-node-${count.index + 1}"
   desc = "Kubernetes Node ${count.index + 1}"
   vmid = var.ci_start_vmid + (count.index + var.ci_k8s_master_count)
-  target_node = "pve"
+  target_node = var.ci_target_node
 
-  clone = "ubuntu-cloud-init"
+  clone = var.ci_template
+  tags = "node"
 
   agent = 1
   cores = 2
@@ -73,8 +74,7 @@ resource "proxmox_vm_qemu" "srv-k8s-nodes" {
 
   os_type = "cloud-init"
   ipconfig0 = "ip=${var.ci_k8s_base_node_ip}${count.index}/${var.ci_network_cidr},gw=${var.ci_ip_gateway}"
-  nameserver = "8.8.8.8 8.8.4.4 192.168.56.1"
-  searchdomain = "piinalpin.lab"
+  nameserver = "192.168.56.1 8.8.8.8 8.8.4.4"
   ciuser = var.ci_user
   cipassword = var.ci_password
   sshkeys = <<EOF

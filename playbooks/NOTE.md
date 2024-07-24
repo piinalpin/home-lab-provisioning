@@ -1,9 +1,12 @@
 ### Kubernetes
 
-- apt update upgrade
-- install containerd `sudo apt install containerd` all vm
+- `sudo apt update && sudo apt upgrade`
+- `sudo systemctl disable systemd-resolved`
+- `sudo systemctl mask systemd-resolved`
+- install containerd `sudo apt install -y containerd` all vm
 - `sudo mkdir /etc/containerd`
 - `containerd config default | sudo tee /etc/containerd/config.toml` -> can reuse `files/config.toml`
+- Update `io.containerd.grpc.v1.cri".containerd.runtimes.runc.options` set `SystemdCgroup = true`
 - create file `/etc/crictl.yaml` add this line
     ```yaml
     runtime-endpoint: unix:///var/run/containerd/containerd.sock
@@ -15,6 +18,7 @@
     br_netfilter
     ```
 -  reboot
+- Create directory `/etc/apt/keyrings`
 - Add kubernetes keyring
     ```bash
     curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -25,7 +29,7 @@
     ```
 - Install kubernetes
     ```bash
-    sudo apt install kubeadm kubectl kubelet
+    sudo apt install -y kubeadm kubectl kubelet
     ```
 - Install kubernetes cluster
     ```bash
@@ -51,13 +55,4 @@
 - Join node to master
     ```bash
     sudo kubeadm join 192.168.56.10:6443 --token 882dcm.kp9492zzckta1mgb --discovery-token-ca-cert-hash sha256:24dfcf2f83386ef2056a4b2ba7964e5582c8b9bbce8418a32ebe5b8af2050be8
-    ```
-- Check `kube-dns` ip and replace `/etc/resolv.conf` on each nodes
-    ```text
-    nameserver 10.96.0.10
-    nameserver 8.8.8.8
-    nameserver 8.8.4.4
-    nameserver 192.168.56.1
-    search default.svc.cluster.local svc.cluster.local cluster.local piinalpin.lab
-    options ndots:5
     ```

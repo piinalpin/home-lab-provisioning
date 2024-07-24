@@ -15,3 +15,5 @@ ci_k8s_base_node_ip     = "192.168.56.2" # Will generate 192.168.56.2X
 ci_ip_gateway           = "192.168.56.1"
 ci_network_cidr         = 24
 ci_start_vmid           = 100
+ci_target_node          = "pve"
+ci_template             = "ubuntu-bionic"

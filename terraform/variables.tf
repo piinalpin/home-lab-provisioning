@@ -59,3 +59,11 @@ variable "ci_network_cidr" {
 variable "ci_start_vmid" {
   type = number
 }
+
+variable "ci_template" {
+  type = string
+}
+
+variable "ci_target_node" {
+  type = string
+}
