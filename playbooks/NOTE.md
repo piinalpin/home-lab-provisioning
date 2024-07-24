@@ -4,6 +4,10 @@
 - install containerd `sudo apt install containerd` all vm
 - `sudo mkdir /etc/containerd`
 - `containerd config default | sudo tee /etc/containerd/config.toml` -> can reuse `files/config.toml`
+- create file `/etc/crictl.yaml` add this line
+    ```yaml
+    runtime-endpoint: unix:///var/run/containerd/containerd.sock
+    ```
 - Ensure disabled swap
 - `/etc/sysctl.conf` uncomment `net.ipv4.ip_forward=1`
 - add file `/etc/modules-load.d/k8s.conf`
@@ -25,7 +29,7 @@
     ```
 - Install kubernetes cluster
     ```bash
-    sudo kubeadm init --control-plane-endpoint=192.168.56.10 --node-name k8s-master --pod-network-cidr=10.244.0.0/16
+    sudo kubeadm init --apiserver-advertise-address=192.168.56.10 --apiserver-cert-extra-sans=192.168.56.10 --control-plane-endpoint=192.168.56.10 --node-name k8s-master --pod-network-cidr=10.244.0.0/16
     ```
 
 - Execute this
@@ -41,10 +45,19 @@
 
 - Get kubeadmin join command
     ```bash
-    kubeadm token create --print-join-command
+    sudo kubeadm token create --print-join-command
     ```
 
 - Join node to master
     ```bash
     sudo kubeadm join 192.168.56.10:6443 --token 882dcm.kp9492zzckta1mgb --discovery-token-ca-cert-hash sha256:24dfcf2f83386ef2056a4b2ba7964e5582c8b9bbce8418a32ebe5b8af2050be8
+    ```
+- Check `kube-dns` ip and replace `/etc/resolv.conf` on each nodes
+    ```text
+    nameserver 10.96.0.10
+    nameserver 8.8.8.8
+    nameserver 8.8.4.4
+    nameserver 192.168.56.1
+    search default.svc.cluster.local svc.cluster.local cluster.local piinalpin.lab
+    options ndots:5
     ```
