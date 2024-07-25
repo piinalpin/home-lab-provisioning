@@ -46,10 +46,6 @@ prometheus:
       runAsUser: 1000
       seccompProfile:
         type: RuntimeDefault
-    hostAliases:
-    - ip: "192.168.56.101"
-      hostnames:
-        - demo-app.piinalpin.lab
     additionalScrapeConfigs: 
       - job_name: blackbox
         metrics_path: /probe
@@ -57,9 +53,9 @@ prometheus:
           module: [http_2xx]
         static_configs:
           - targets:
-            - http://demo-app.piinalpin.lab/dexter/actuator/health
-            - http://demo-app.piinalpin.lab/enclave/actuator/health
-            - http://demo-app.piinalpin.lab/valkyrie/actuator/health
+            - http://dexter.default.svc.cluster.local/actuator/health
+            - http://enclave.default.svc.cluster.local/actuator/health
+            - http://valkyrie.default.svc.cluster.local/actuator/health
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target

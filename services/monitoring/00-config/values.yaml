@@ -12,13 +12,19 @@ grafanaStorage:
     capacity: 10Gi
     storageClassName: rook-ceph-block
 
-istio:
+gateway:
+  enabled: true
+  annotations:
+    konghq.com/strip-path: 'true'
+  parentRefs:
+    - name: kong
+      namespace: default
   hosts:
     - name: grafana
       host: grafana.piinalpin.lab
+      service: grafana
       port: 80
-      serviceName: grafana
     - name: prometheus
       host: prometheus.piinalpin.lab
+      service: prometheus-prometheus
       port: 9090
-      serviceName: prometheus-prometheus
