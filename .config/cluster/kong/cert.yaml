@@ -1,0 +1,26 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+  namespace: kong
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kong-cluster-cert
+  namespace: kong
+spec:
+  secretName: kong-cluster-cert
+  duration: 21600h # 900d
+  renewBefore: 360h # 15d
+  commonName: kong_clustering
+  privateKey:
+    rotationPolicy: Always
+    algorithm: ECDSA
+    encoding: PKCS8
+    size: 384
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer

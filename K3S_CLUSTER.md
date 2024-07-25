@@ -48,8 +48,7 @@ kubectl apply -f ./config/cluster/kong/kong-cluster-plugin.yaml
 
 Install kong
 ```bash
-helm -n kong-gateway install kong kong/ingress  --create-namespace
-helm upgrade kong kong/ingress -n kong-gateway --set gateway.serviceMonitor.enabled=true --set gateway.serviceMonitor.labels.release=kube-prometheus
+helm -n kong install kong kong/ingress --set gateway.serviceMonitor.enabled=true --set gateway.serviceMonitor.labels.release=kube-prometheus  --create-namespace
 ```
 Update `/etc/hosts`
 
@@ -68,4 +67,9 @@ helm -n rook-ceph install ceph-block-pool ./service/storage-class -f ./service/s
 Create directory on each virtual machine because we will use local storage
 ```bash
 mkdir -p database/postgresql
+```
+
+## Install Cert Manager
+```bash
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set crds.enabled=true --set 'extraArgs={--dns01-recursive-nameservers-only,--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53}'
 ```
