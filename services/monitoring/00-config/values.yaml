@@ -1,8 +1,4 @@
 grafanaStorage:
-  - name: prometheus
-    hostPath: /home/k8s/monitoring
-    capacity: 15Gi
-    storageClassName: rook-ceph-block
   - name: alertmanager
     hostPath: /home/k8s/monitoring
     capacity: 100Mi

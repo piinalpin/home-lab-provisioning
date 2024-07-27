@@ -8,5 +8,9 @@ data:
   CONTEXT_PATH: ""
   APPLICATION_NAME: {{ .name }}
   ANOTHER_SERVICE_INFO_URL: "http://{{ .anotherServiceHost }}/get-another-service-info"
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ $.Values.tempo.host }}
+  OTEL_EXPORTER_OTLP_INSECURE: "true"
+  OTEL_SERVICE_NAME: {{ .name }}
+  OTEL_PROPAGATORS: b3
 ---
 {{- end }}

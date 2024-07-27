@@ -33,6 +33,9 @@ application:
       labels: 
         app: demo-app-backend
 
+tempo:
+  host: http://tempo.monitoring.svc.cluster.local:4318
+
 gateway:
   enabled: true
   annotations:
