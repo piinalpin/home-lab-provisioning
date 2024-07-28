@@ -7,7 +7,6 @@ loki:
   image:
     tag: 2.9.3
   enabled: true
-  isDefault: true
   url: http://{{(include "loki.serviceName" .)}}:{{ .Values.loki.service.port }}
   storage: filesystem
   readinessProbe:
@@ -38,6 +37,13 @@ promtail:
     serverPort: 3101
     clients:
       - url: http://{{ .Release.Name }}:3100/loki/api/v1/push
+    snippets:
+      pipelineStages:
+        - json:
+            expressions:
+              log: log
+        - output:
+            source: log
   resources:
     requests:
       cpu: 100m
