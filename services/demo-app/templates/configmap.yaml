@@ -11,6 +11,5 @@ data:
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ $.Values.tempo.host }}
   OTEL_EXPORTER_OTLP_INSECURE: "true"
   OTEL_SERVICE_NAME: {{ .name }}
-  OTEL_PROPAGATORS: b3
 ---
 {{- end }}
