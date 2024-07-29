@@ -100,6 +100,31 @@ grafana:
       - ReadWriteOnce
     size: 10Gi
     storageClassName: "rook-ceph-block"
+  additionalDataSources:
+    - name: Loki
+      access: proxy
+      type: loki
+      url: http://loki:3100
+      version: 1
+      editable: true
+      jsonData: 
+        tlsSkipVerify: true
+        maxLines: 1000
+        derivedFields:
+          - datasourceUid: "Tempo"
+            matcherRegex: "trace_id=(\\w+)"
+            name: trace_id
+            url: "$${__value.raw}"
+            urlDisplayLabel: "View Trace"
+    - name: Tempo
+      access: proxy
+      type: tempo
+      url: http://tempo:3100
+      version: 1
+      editable: true
+      jsonData: 
+        tlsSkipVerify: true
+        maxLines: 1000
 
 alertmanager:
   enabled: true

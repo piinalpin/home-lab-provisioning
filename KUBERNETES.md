@@ -57,24 +57,30 @@ Create directory `/run/promtail`
 sudo mkdir /run/promtail && sudo chown -R $(whoami) /run/promtail && ls /run && exit
 ```
 
+or using systemd (this case on k3s baremetal) `sudo nano /etc/systemd/system/mkdir-run-promtail.service`
+
+```systemd
+[Unit]
+Description=Create /run/promptail at startup
+
+[Service]
+Type=oneshot
+ExecStart=/bin/mkdir -p /run/promtail
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Start and activate
+```bash
+sudo systemctl enable /etc/systemd/system/mkdir-run-promtail.service
+sudo systemctl start /etc/systemd/system/mkdir-run-promtail.service
+```
+
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 helm -n monitoring install loki grafana/loki-stack -f ./service/monitoring/loki-stack/values.yaml --create-namespace
-```
-
-**Add Loki to Grafana Datasource**
-Select new datasource `Loki` and set url to `http://loki:3100`
-
-Add derived fields datasource
-```text
-name = trace_id
-type = Regex in log line
-regex = trace_id=(\w+)
-query = ${__value.raw}
-url label = View Trace
-
-Turn on internal link select Datasource Tempo
 ```
 
 ### Reference

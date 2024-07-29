@@ -7,6 +7,7 @@ loki:
   image:
     tag: 2.9.3
   enabled: true
+  isDefault: false
   url: http://{{(include "loki.serviceName" .)}}:{{ .Values.loki.service.port }}
   storage: filesystem
   readinessProbe:
@@ -61,16 +62,12 @@ grafana:
     datasources:
       label: ""
       labelValue: ""
-      enabled: true
+      enabled: false
       maxLines: 1000
   image:
     tag: 11.1.0
   persistence:
-    enabled: true
-    storageClassName: rook-ceph-block
-    accessModes:
-      - ReadWriteOnce
-    size: 15Gi
+    enabled: false
 
     
 prometheus:
