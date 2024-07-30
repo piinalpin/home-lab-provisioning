@@ -20,7 +20,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 13659,
   "graphTooltip": 0,
-  "id": 218,
+  "id": 28,
   "links": [],
   "panels": [
     {
@@ -388,7 +388,7 @@
               },
               {
                 "id": "custom.width",
-                "value": 276
+                "value": 425
               },
               {
                 "id": "mappings",
@@ -459,12 +459,7 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "SSL Cert Expiry (days)"
-          }
-        ]
+        "sortBy": []
       },
       "pluginVersion": "11.1.0",
       "repeatDirection": "h",
