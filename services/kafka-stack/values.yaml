@@ -1,0 +1,45 @@
+# Default values for kafka.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  pullPolicy: IfNotPresent
+  zookeeper:
+    repository: confluentinc/cp-zookeeper
+    tag: "7.7.0"
+  kafka:
+    repository: confluentinc/cp-kafka
+    tag: "7.7.0"
+  kafdrop:
+    repository: obsidiandynamics/kafdrop
+    tag: "4.0.2"
+
+kafka:
+  service:
+    type: LoadBalancer
+    loadBalancerIP: 192.168.56.53
+    ports:
+      - protocol: TCP
+        port: 9092
+        name: external
+      - protocol: TCP
+        port: 29092
+        name: internal
+      - protocol: TCP
+        port: 9101
+        name: jmx
+
+kafdrop:
+  enabled: true
+  service:
+    port: 9000
+  gateway:
+    annotations:
+      konghq.com/strip-path: 'true'
+    parentRefs:
+      - name: kong
+        namespace: default
+    hostnames:
+      - kafdrop.piinalpin.lab

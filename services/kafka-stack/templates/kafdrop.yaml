@@ -1,0 +1,65 @@
+{{- if .Values.kafdrop.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafdrop
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: kafdrop
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: kafdrop
+    spec:
+      initContainers:
+      - name: wait-zookeeper-ready
+        image: busybox:1.28
+        command:
+          - sh
+          - -c
+          - |
+            if [ "${KAFKA_SERVICE_TYPE}" = "LoadBalancer" ]; then \
+              until nc -z ${KAFKA_LOAD_BALANCER_IP} 9092; \
+              do echo "Waiting for Kafka LoadBalancer at ${KAFKA_LOAD_BALANCER_IP}:9092..."; sleep 2; done; \
+            else \
+              until nc -z ${KAFKA_INTERNAL_HOST} 29092; \
+              do echo "Waiting for Kafka ClusterIP at ${KAFKA_INTERNAL_HOST}:29092..."; sleep 2; done; \
+            fi
+        env:
+          - name: KAFKA_SERVICE_TYPE
+            value: "{{ .Values.kafka.service.type }}"
+          - name: KAFKA_LOAD_BALANCER_IP
+            value: "{{ .Values.kafka.service.loadBalancerIP }}"
+          - name: KAFKA_INTERNAL_HOST
+            value: "kafka.{{ .Release.Namespace }}.svc.cluster.local"
+      containers:
+        - name: kafdrop
+          image: "{{ .Values.image.kafdrop.repository }}:{{ .Values.image.kafdrop.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 9000
+              protocol: TCP
+          env:
+            - name: KAFKA_BROKERCONNECT
+              {{- if eq .Values.kafka.service.type "LoadBalancer" }}
+              value: "{{ .Values.kafka.service.loadBalancerIP }}:19092"
+              {{- else }}
+              value: "kafka.{{ .Release.Namespace }}.svc.cluster.local:19092"
+              {{- end }}
+          livenessProbe: 
+            httpGet:
+              path: /
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources: {}
+{{- end }}

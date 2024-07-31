@@ -1,0 +1,26 @@
+{{- if .Values.kafdrop.enabled }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: kafdrop
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.kafdrop.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+  {{- toYaml .Values.kafdrop.gateway.parentRefs | nindent 4 }}
+  hostnames:
+  {{- toYaml .Values.kafdrop.gateway.hostnames | nindent 4 }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: kafdrop
+          kind: Service
+          port: {{ .Values.kafdrop.service.port }}
+          namespace: {{ .Release.Namespace }}
+{{- end }}

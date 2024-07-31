@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      enableServiceLinks: false
+      initContainers:
+      - name: wait-zookeeper-ready
+        image: busybox:1.28
+        command:
+        - sh
+        - -c
+        - >
+          until nc -z ${ZOOKEEPER_HOST} ${ZOOKEEPER_PORT};
+          do
+            echo waiting for ${ZOOKEEPER_HOST};
+            sleep 2;
+          done;
+        env:
+          - name: ZOOKEEPER_HOST
+            value: "zookeeper.{{ .Release.Namespace }}.svc.cluster.local"
+          - name: ZOOKEEPER_PORT
+            value: "2181"
+      containers:
+      - name: kafka
+        image: "{{ .Values.image.kafka.repository }}:{{ .Values.image.kafka.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+          - name: external
+            containerPort: 9092
+            protocol: TCP
+          - name: internal
+            containerPort: 29092
+            protocol: TCP
+          - name: jmx
+            containerPort: 9101
+            protocol: TCP
+        envFrom:
+          - secretRef:
+              name: kafka-secret
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'kafka-broker-api-versions.sh --bootstrap-server localhost:9092'
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources: {}
