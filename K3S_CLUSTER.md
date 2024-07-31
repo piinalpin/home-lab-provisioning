@@ -38,6 +38,7 @@ kubectl apply -f .config/cluster/metallb/l2advertisement.yaml
 Add gateway CRD
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/main/config/crd/experimental/gateway.networking.k8s.io_backendtlspolicies.yaml
 ```
 
 Create `gatewayclass` and `gateway`

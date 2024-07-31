@@ -1,0 +1,32 @@
+replicaCount: 1
+
+gateway:
+  annotations:
+    konghq.com/strip-path: 'true'
+  parentRefs:
+    - name: kong
+      namespace: default
+  hostname: elasticsearch.piinalpin.lab
+
+volumeTemplates:
+  - metadata:
+      name: elasticsearch-data
+    spec:
+      storageClassName: rook-ceph-block
+      capacity:
+        storage: 14Gi
+      accessModes:
+        - ReadWriteOnce
+      hostPath:
+        path: /home/k8s/database/elasticsearch
+
+volumeClaimTemplates:
+  - metadata:
+      name: elasticsearch-data
+    spec:
+      storageClassName: rook-ceph-block
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 14Gi

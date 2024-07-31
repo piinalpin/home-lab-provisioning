@@ -1,0 +1,18 @@
+{{- range .Values.volumeTemplates }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .metadata.name }}
+  labels:
+    app.kubernetes.io/name: "{{ $.Release.Name }}"
+  namespace: {{ $.Release.Namespace }}
+spec:
+  storageClassName: {{ .spec.storageClassName }}
+  capacity:
+    storage: {{ .spec.capacity.storage }}
+  accessModes:
+    {{- toYaml .spec.accessModes | nindent 4 }}
+  hostPath:
+    path: {{ .spec.hostPath.path }}
+---
+{{- end }}

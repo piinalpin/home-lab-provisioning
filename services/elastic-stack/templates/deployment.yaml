@@ -1,0 +1,31 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  version: 8.13.2
+  auth:
+    fileRealm:
+      - secretName: "{{ .Release.Name }}-secret-basic-auth"
+  http:
+    service:
+      metadata:
+        name: {{ .Release.Name }}
+        labels:
+          app: {{ .Release.Name }}
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        node.roles: [master, data]
+        node.store.allow_mmap: false
+      podTemplate:
+        spec:
+          containers:
+            - name: {{ .Release.Name }}
+              resources: {}
+      volumeClaimTemplates:
+        {{- toYaml .Values.volumeClaimTemplates | nindent 6 }}
