@@ -8,9 +8,6 @@ image:
   repository: kong/kong
   tag: "3.7.1"
   
-# Mount the secret created earlier
-secretVolumes:
-  - kong-cluster-cert
 
 deployment:
   hostAliases:
@@ -19,15 +16,12 @@ deployment:
         - kong-admin.piinalpin.lab
   
 env:
-  admin_gui_url: http://kong-manager.piinalpin.lab
-  admin_gui_api_url: http://kong-admin.piinalpin.lab
+  admin_gui_url: https://kong.piinalpin.lab
+  admin_gui_api_url: https://kong-admin.piinalpin.lab
   # Change the secret and set cookie_secure to true if using a HTTPS endpoint
-  admin_gui_session_conf: '{"secret":"secret","storage":"kong","cookie_secure":false}'
+  admin_gui_session_conf: '{"secret":"secret","storage":"kong","cookie_secure":true}'
   # This is a control_plane node
   role: control_plane
-  # These certificates are used for control plane / data plane communication
-  cluster_cert: /etc/secrets/kong-cluster-cert/tls.crt
-  cluster_cert_key: /etc/secrets/kong-cluster-cert/tls.key
   
   # Database
   # CHANGE THESE VALUES
@@ -57,17 +51,32 @@ enterprise:
   rbac:
     enabled: true
     admin_gui_auth: basic-auth
-  
+
+certificates:
+  enabled: true
+  issuer: selfsigned-kong
+  cluster:
+    enabled: true
+    commonName: kong.piinalpin.lab
 # The control plane serves the Admin API
 admin:
   enabled: true
+  annotations:
+    konghq.com/protocol: "https"
   http:
     enabled: true
   tls:
-    enabled: false
+    enabled: true
   ingress:
     enabled: true
+    annotations:
+      konghq.com/strip-path: "true"
+      konghq.com/preserve-host: "true"
+      kubernetes.io/ingress.class: "kong"
+      cert-manager.io/issuer: selfsigned-kong
     hostname: kong-admin.piinalpin.lab
+    tls: 
+      secretName: kong-piinalpin-lab-tls
     path: /
     pathType: Prefix
     ingressClassName: kong
@@ -82,21 +91,39 @@ clustertelemetry:
  enabled: true
  tls:
    enabled: true
-  
-# Optional features
-manager:
+
+status:
   enabled: true
   http:
     enabled: true
   tls:
-    enabled: false
-     
+    enabled: true
+  
+# Optional features
+manager:
+  enabled: true
+  annotations:
+    konghq.com/protocol: "https"
+  http:
+    enabled: true
+  tls:
+    enabled: true
+    parameters:
+      - http2
   ingress:
     enabled: true
-    hostname: kong-manager.piinalpin.lab
+    annotations:
+      konghq.com/strip-path: "true"
+      konghq.com/preserve-host: "true"
+      kubernetes.io/ingress.class: "kong"
+      cert-manager.io/issuer: selfsigned-kong
+    hostname: kong.piinalpin.lab
+    tls:
+      secretName: kong-piinalpin-lab-tls
     path: /
     pathType: Prefix
     ingressClassName: kong
+    
   
 # These roles will be served by different Helm releases
 proxy:

@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-kong
+  namespace: kong
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kong.piinalpin.lab-tls
+  namespace: kong
+spec:
+  secretName: kong.piinalpin.lab-tls
+  issuerRef:
+    name: selfsigned-kong
+    kind: Issuer
+  commonName: kong.piinalpin.lab
+  dnsNames:
+  - kong-admin.piinalpin.lab
+  - kong.piinalpin.lab

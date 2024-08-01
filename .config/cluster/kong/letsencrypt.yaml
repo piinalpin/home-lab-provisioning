@@ -1,0 +1,30 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-kong
+  namespace: kong
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@piinalpin.com
+    privateKeySecretRef:
+      name: kong.piinalpin.lab-tls
+    solvers:
+    - http01:
+        ingress:
+          class: kong
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kong.piinalpin.lab-tls
+  namespace: kong
+spec:
+  secretName: kong.piinalpin.lab-tls
+  issuerRef:
+    name: letsencrypt-kong
+    kind: ClusterIssuer
+  commonName: kong.piinalpin.lab
+  dnsNames:
+  - kong-admin.piinalpin.lab
+  - kong.piinalpin.lab
