@@ -86,6 +86,7 @@ prometheus:
               action: replace
 
 grafana:
+  assertNoLeakedSecrets: false
   enabled: true
   adminPassword: 7Z6e2BgOLWLX
   image:
@@ -125,6 +126,15 @@ grafana:
       jsonData: 
         tlsSkipVerify: true
         maxLines: 1000
+  grafana.ini:
+    smtp:
+      assertNoLeakedSecrets: true
+      enabled: true
+      host: in-v3.mailjet.com:587
+      user: yourapikey
+      password: '"""yoursecretkey"""'
+      startTLS: "NoStartTLS"
+      from_address: youremail@example.com
 
 alertmanager:
   enabled: true
