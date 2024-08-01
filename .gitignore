@@ -6,3 +6,6 @@
 playbooks/files/joincluster
 config.yaml
 .helm/
+*.key
+*.crt
+*.pem
