@@ -22,7 +22,7 @@ Remove-Item ecparam.pem
 kubectl create secret tls kong-cluster-cert --cert=cluster.crt --key=cluster.key --namespace kong
 ```
 
-### Apply TLS certificate for Ingress
+### Install Cert Manager and Apply TLS certificate for Ingress
 ```bash
 helm repo add jetstack https://charts.jetstack.io
 helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.15.2 --set crds.enabled=true
@@ -49,7 +49,7 @@ helm install kong-cp kong/kong -n kong --values ./kong/values-dp.yaml
 
 ### Install Kong Gateway Operator
 ```bash
-helm install kgo kong/gateway-operator -n kong --set image.tag=20240729-amd64
+helm install kgo kong/gateway-operator -n kong --set image.tag=1.3
 ```
 
 ### Apply Gateway Class
