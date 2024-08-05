@@ -10,14 +10,36 @@ service:
   type: ClusterIP
   port: 8080
 
-gateway:
-  annotations:
-    konghq.com/strip-path: 'true'
-  parentRefs:
-    - name: kong
-      namespace: default
-  hostnames:
+certificates:
+  enabled: true
+  commonName: keycloak.piinalpin.lab
+  issuerName: selfsigned-keycloak
+  dnsNames:
     - keycloak.piinalpin.lab
+
+ingress:
+  enabled: true
+  annotations:
+    konghq.com/strip-path: "true"
+    konghq.com/protocols: https
+    konghq.com/preserve-host: "true"
+    cert-manager.io/issuer: selfsigned-keycloak
+  hostname: keycloak.piinalpin.lab
+  tls: keycloak.piinalpin.lab-tls
+  path: /
+  pathType: Prefix
+  ingressClassName: kong
+
+# gateway:
+#   tls:
+#     commonName: keycloak.piinalpin.lab
+#   annotations:
+#     konghq.com/strip-path: 'true'
+#   parentRefs:
+#     - name: keycloak-gateway
+#       namespace: keycloak
+#   hostnames:
+#     - keycloak.piinalpin.lab
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

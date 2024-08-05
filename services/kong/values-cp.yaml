@@ -1,8 +1,5 @@
 ingressController:
-  enabled: true
-  env:
-    publish_service: kong/kong-dp-kong-proxy
-    kong_admin_token: k9s9KgAcDrh4
+  enabled: false
 
 image:
   repository: kong/kong
@@ -76,7 +73,6 @@ admin:
       konghq.com/strip-path: "true"
       konghq.com/protocols: https
       konghq.com/preserve-host: "true"
-      kubernetes.io/ingress.class: "kong"
       cert-manager.io/issuer: selfsigned-kong.piinalpin.lab
     hostname: kong.piinalpin.lab
     tls: kong.piinalpin.lab-tls
@@ -119,7 +115,6 @@ manager:
       konghq.com/strip-path: "true"
       konghq.com/preserve-host: "true"
       konghq.com/protocols: https
-      kubernetes.io/ingress.class: "kong"
       cert-manager.io/issuer: selfsigned-kong.piinalpin.lab
     hostname: kong.piinalpin.lab
     tls: kong.piinalpin.lab-tls

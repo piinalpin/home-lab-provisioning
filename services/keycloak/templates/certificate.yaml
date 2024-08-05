@@ -1,0 +1,32 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.certificates.issuerName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "{{ .Values.certificates.commonName }}-tls"
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ .Values.ingress.tls }}
+  issuerRef:
+    name: {{ .Values.certificates.issuerName }}
+    kind: Issuer
+  commonName: {{ .Values.certificates.commonName }}
+  duration: 26280h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+  dnsNames:
+    {{- toYaml .Values.certificates.dnsNames | nindent 4 }}
