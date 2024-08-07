@@ -1,5 +1,17 @@
 ingressController:
-  enabled: false
+  enabled: true
+  image:
+    repository: kong/kubernetes-ingress-controller
+    tag: "3.2"
+  ingressClass: kong
+  env:
+    kong_admin_tls_skip_verify: true
+  customEnv:
+    TZ: "Asia/Jakarta"
+  adminApi:
+    tls:
+      client:
+        enabled: true
 
 image:
   repository: kong/kong
@@ -41,11 +53,9 @@ env:
       secretKeyRef:
         name: postgres-credential
         key: password
-  pg_host: postgresql.database.svc.cluster.local
+  pg_host: postgresql.db.svc.cluster.local
   pg_schema: kong
   pg_ssl: "off"
-  # Kong Manager password
-  password: k9s9KgAcDrh4
 
 # certificates:
 #   enabled: true
