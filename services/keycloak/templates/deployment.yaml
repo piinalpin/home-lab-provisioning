@@ -32,7 +32,7 @@ spec:
                 name: "{{ .Release.Name }}-secret"
           volumeMounts:
             - mountPath: "/etc/x509/https"
-              name: {{ .Values.certificates.secretName }}
+              name: {{ .Values.ingress.tls }}
               readOnly: true
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
@@ -41,6 +41,6 @@ spec:
           resources:
             {{- toYaml $.Values.resources | nindent 12 }}
       volumes:
-        - name: {{ .Values.certificates.secretName }}
+        - name: {{ .Values.ingress.tls }}
           secret:
-            secretName: {{ .Values.certificates.secretName }}
+            secretName: {{ .Values.ingress.tls }}

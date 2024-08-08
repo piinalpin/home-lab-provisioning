@@ -1,0 +1,32 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-keycloak
+  namespace: keycloak
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: keycloak.piinalpin.lab
+  namespace: keycloak
+spec:
+  secretName: keycloak-piinalpin-lab-cert
+  issuerRef:
+    name: selfsigned-keycloak
+    kind: Issuer
+  commonName: keycloak.piinalpin.lab
+  duration: 26280h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+  dnsNames:
+    - keycloak.piinalpin.lab

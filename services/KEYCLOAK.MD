@@ -1,12 +1,6 @@
-### Create Self Signed Certificate
+### Create TLS Certificate
 ```bash
-openssl req -new -x509 -nodes -newkey ec:<(openssl ecparam -name secp384r1) -keyout keycloak.key -out keycloak.crt -days 1095 \
--subj "/C=ID/ST=Yogyakarta/L=Yogyakarta/O=Homelab Ltd./OU=Homelab/CN=keycloak.piinalpin.lab"
-```
-
-### Create TLS Secret
-```bash
-kubectl create secret tls keycloak-piinalpin-lab-cert --cert=keycloak.crt --key=keycloak.key --namespace keycloak
+kubectl apply -f .config/cluster/certificates/keycloak.yaml
 ```
 
 ### Install with helm

@@ -14,14 +14,6 @@ service:
   type: ClusterIP
   port: 8443
 
-certificates:
-  enabled: true
-  commonName: keycloak.piinalpin.lab
-  issuerName: selfsigned-keycloak
-  secretName: keycloak-piinalpin-lab-cert
-  dnsNames:
-    - keycloak.piinalpin.lab
-
 ingress:
   enabled: true
   annotations:
@@ -34,16 +26,6 @@ ingress:
   pathType: Prefix
   ingressClassName: kong
 
-# gateway:
-#   tls:
-#     commonName: keycloak.piinalpin.lab
-#   annotations:
-#     konghq.com/strip-path: 'true'
-#   parentRefs:
-#     - name: keycloak-gateway
-#       namespace: keycloak
-#   hostnames:
-#     - keycloak.piinalpin.lab
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
