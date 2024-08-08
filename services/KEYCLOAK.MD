@@ -1,15 +1,15 @@
-### Install CRD
+### Create Self Signed Certificate
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/23.0.7/kubernetes/keycloaks.k8s.keycloak.org-v1.yml
-kubectl apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/23.0.7/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
+openssl req -new -x509 -nodes -newkey ec:<(openssl ecparam -name secp384r1) -keyout keycloak.key -out keycloak.crt -days 1095 \
+-subj "/C=ID/ST=Yogyakarta/L=Yogyakarta/O=Homelab Ltd./OU=Homelab/CN=keycloak.piinalpin.lab"
 ```
 
-### Install Operator
+### Create TLS Secret
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/23.0.7/kubernetes/kubernetes.yml -n keycloak
+kubectl create secret tls keycloak-piinalpin-lab-cert --cert=keycloak.crt --key=keycloak.key --namespace keycloak
 ```
 
-### Create DB Secret
+### Install with helm
 ```bash
-kubectl create secret generic kc-postgres-credential -n keycloak --from-literal=user=adminrnd --from-literal=password=gWl7Jj3eZbFEhBqg
+helm install keycloak services/keycloak -n keycloak
 ```

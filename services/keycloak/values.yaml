@@ -7,13 +7,18 @@ image:
   tag: "23.0.7"
 
 service:
+  annotations:
+    konghq.com/protocol: https
+    ingress.kubernetes.io/service-upstream: "true"
+  protocol: https
   type: ClusterIP
-  port: 8080
+  port: 8443
 
 certificates:
   enabled: true
   commonName: keycloak.piinalpin.lab
   issuerName: selfsigned-keycloak
+  secretName: keycloak-piinalpin-lab-cert
   dnsNames:
     - keycloak.piinalpin.lab
 
@@ -23,9 +28,8 @@ ingress:
     konghq.com/strip-path: "true"
     konghq.com/protocols: https
     konghq.com/preserve-host: "true"
-    cert-manager.io/issuer: selfsigned-keycloak
   hostname: keycloak.piinalpin.lab
-  tls: keycloak.piinalpin.lab-tls
+  tls: keycloak-piinalpin-lab-cert
   path: /
   pathType: Prefix
   ingressClassName: kong
