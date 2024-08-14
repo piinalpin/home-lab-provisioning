@@ -1,0 +1,90 @@
+secrets: ""
+
+tenant:
+  name: minio
+  image:
+    repository: quay.io/minio/minio
+    tag: RELEASE.2024-08-03T04-33-23Z
+    pullPolicy: IfNotPresent
+  configuration:
+    name: minio-env-configuration
+  configSecret:
+    name: minio-env-configuration
+    accessKey: minioadmin
+    secretKey: CvZ7ktQMoD9P
+  pools:
+  # For standalone mode, supply 1. For distributed mode, supply 4 or more.
+  - servers: 1
+    name: pool-0
+    volumesPerServer: 1
+    size: 20Gi
+    storageClassName: rook-ceph-block
+    labels:
+      app: minio
+    resources: {}
+  mountPath: /export
+  metrics:
+    enabled: true
+    port: 9000
+    protocol: https
+  certificate:
+    externalCaCertSecret: []
+    externalCertSecret:
+    - name: minio-tls
+      type: kubernetes.io/tls
+    requestAutoCert: false
+  liveness:
+    httpGet:
+      path: /
+      port: 9443
+      scheme: HTTPS
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readiness:
+    httpGet:
+      path: /
+      port: 9443
+      scheme: HTTPS
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  env:
+  - name: MINIO_BROWSER_LOGIN_ANIMATION
+    value: "off"
+
+ingress:
+  api:
+    enabled: true
+    ingressClassName: kong
+    labels:
+      app: minio
+    annotations:
+      konghq.com/strip-path: "true"
+      konghq.com/protocols: https
+      konghq.com/preserve-host: "true"
+    tls:
+    - secretName: minio-tls
+      hosts:
+      - minio.piinalpin.lab
+    host: minio.piinalpin.lab
+    path: /api
+    pathType: Prefix
+  console:
+    enabled: true
+    ingressClassName: kong
+    labels:
+      app: minio
+    annotations:
+      konghq.com/strip-path: "true"
+      konghq.com/protocols: https
+      konghq.com/preserve-host: "true"
+    tls:
+    - secretName: minio-tls
+      hosts:
+      - minio.piinalpin.lab
+    host: minio.piinalpin.lab
+    path: /
+    pathType: Prefix

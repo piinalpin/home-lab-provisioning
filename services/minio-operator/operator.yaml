@@ -1,0 +1,27 @@
+operator:
+  env:
+    - name: OPERATOR_STS_ENABLED
+      value: "on"
+    - name: MINIO_OPERATOR_DEPLOYMENT_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.labels['app.kubernetes.io/name']
+    - name: MINIO_OPERATOR_RUNTIME
+      value: Kubernetes
+    - name: OPERATOR_STS_AUTO_TLS_ENABLED
+      value: "off"
+  image:
+    repository: quay.io/minio/operator
+    tag: v6.0.2
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  volumes:
+    - name: tls-certificates
+      secret:
+        secretName: sts-tls
+        items:
+          - key: tls.crt
+            path: CAs/public.crt
+  volumeMounts:
+    - name: tls-certificates
+      mountPath: /tmp/certs
