@@ -45,4 +45,5 @@ spec:
     - minio.s3.svc
     - minio.s3.svc.cluster.local
     - "*.minio.s3.svc.cluster.local"
+    - "*.minio-hl.s3.svc.cluster.local"
     - minio.piinalpin.lab
