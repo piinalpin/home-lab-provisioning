@@ -1,0 +1,49 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-tenant-1-ca-certificate
+  namespace: s3
+spec:
+  secretName: minio-tenant-1-ca-tls
+  issuerRef:
+    name: selfsigned-root
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: minio.piinalpin.lab
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: minio-tenant-1-ca-issuer
+  namespace: s3
+spec:
+  ca:
+    secretName: minio-tenant-1-ca-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-tenant-1-certmanager-cert
+  namespace: s3
+spec:
+  secretName: minio-tls
+  issuerRef:
+    name: minio-tenant-1-ca-issuer
+  dnsNames:
+    - minio.s3
+    - minio.s3.svc
+    - minio.s3.svc.cluster.local
+    - "*.minio.s3.svc.cluster.local"
+    - "*.minio-hl.s3.svc.cluster.local"
+    - minio.piinalpin.lab
