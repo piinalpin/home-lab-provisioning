@@ -15,23 +15,9 @@ tenant:
   pools:
   # For standalone mode, supply 1. For distributed mode, supply 4 or more.
   - servers: 1
-    name: pool-0
+    name: dev
     volumesPerServer: 1
-    size: 10Gi
-    storageClassName: rook-ceph-block
-    labels:
-      app: minio
-  - servers: 1
-    name: pool-1
-    volumesPerServer: 1
-    size: 10Gi
-    storageClassName: rook-ceph-block
-    labels:
-      app: minio
-  - servers: 1
-    name: pool-2
-    volumesPerServer: 1
-    size: 10Gi
+    size: 20Gi
     storageClassName: rook-ceph-block
     labels:
       app: minio

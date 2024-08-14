@@ -1,47 +1,15 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: minio-storage-0
+  name: minio-storage
   namespace: s3
   labels:
     app: minio
 spec:
   storageClassName: rook-ceph-block
   capacity:
-    storage: 10Gi
+    storage: 20Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /home/k8s/minio/pool-0
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: minio-storage-1
-  namespace: s3
-  labels:
-    app: minio
-spec:
-  storageClassName: rook-ceph-block
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: /home/k8s/minio/pool-1
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: minio-storage-2
-  namespace: s3
-  labels:
-    app: minio
-spec:
-  storageClassName: rook-ceph-block
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: /home/k8s/minio/pool-2
+    path: /home/k8s/minio
