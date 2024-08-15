@@ -31,12 +31,6 @@ defaultRules:
 
 prometheus:
   enabled: true
-  service:
-    annotations:
-      konghq.com/protocol: https
-      ingress.kubernetes.io/service-upstream: "true"
-    labels:
-      app: prometheus
   ingress:
     enabled: true
     annotations:
@@ -56,15 +50,6 @@ prometheus:
         hosts:
           - prometheus.piinalpin.lab
   prometheusSpec:
-    web:
-      tlsConfig:
-        keySecret:
-          key: tls.key
-          name: prometheus-tls
-        cert:
-          secret:
-            key: tls.crt
-            name: prometheus-tls
     volumeClaimTemplate:
       spec:
         accessModes: ["ReadWriteOnce"]
@@ -212,11 +197,11 @@ grafana:
     smtp:
       assertNoLeakedSecrets: true
       enabled: true
-      host: <your_smtp_host>
-      user: <your_smtp_user>
-      password: '"""YOUR_SECRET_KEY"""'
+      host: <SMPT_HOST>
+      user: <USERNAME>
+      password: '"""SECRET_KEY"""'
       startTLS: "NoStartTLS"
-      from_address: <your_from_email_address>
+      from_address: <YOUR_EMAIL>
 
 alertmanager:
   enabled: true

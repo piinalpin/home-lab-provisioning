@@ -31,7 +31,6 @@ spec:
             httpGet:
               path: "/actuator/health"
               port: http
-
           readinessProbe:
             httpGet:
               path: "/actuator/health"

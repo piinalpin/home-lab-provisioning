@@ -53,7 +53,4 @@ spec:
     algorithm: ECDSA
     size: 384
   dnsNames:
-    - prometheus.monitoring
-    - prometheus.monitoring.svc
-    - prometheus.monitoring.svc.cluster.local
     - prometheus.piinalpin.lab

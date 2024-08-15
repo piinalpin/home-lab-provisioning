@@ -1,15 +1,15 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: loki-ca-certificate
-  namespace: monitoring
+  name: demo-app-ca-certificate
+  namespace: default
 spec:
-  secretName: loki-ca-tls
+  secretName: demo-app-ca-tls
   issuerRef:
     name: selfsigned-root
     kind: ClusterIssuer
     group: cert-manager.io
-  commonName: loki
+  commonName: demo-app
   duration: 70128h
   renewBefore: 360h
   isCA: true
@@ -25,22 +25,22 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: loki-ca-issuer
-  namespace: monitoring
+  name: demo-app-ca-issuer
+  namespace: default
 spec:
   ca:
-    secretName: loki-ca-tls
+    secretName: demo-app-ca-tls
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: loki-certmanager-cert
-  namespace: monitoring
+  name: demo-app-certmanager-cert
+  namespace: default
 spec:
-  secretName: loki-tls
+  secretName: demo-app-tls
   issuerRef:
-    name: loki-ca-issuer
-  commonName: loki.piinalpin.lab
+    name: demo-app-ca-issuer
+  commonName: demo-app.piinalpin.lab
   duration: 70128h
   renewBefore: 360h
   isCA: true
@@ -53,7 +53,4 @@ spec:
     algorithm: ECDSA
     size: 384
   dnsNames:
-    - loki.monitoring
-    - loki.monitoring.svc
-    - loki.monitoring.svc.cluster.local
-    - loki.piinalpin.lab
+    - demo-app.piinalpin.lab

@@ -5,92 +5,63 @@ image:
   tag: "latest"
 
 application:
-  - name: dexter
-    replicaCount: 2
-    anotherServiceHost: valkyrie.default.svc.cluster.local
-    service:
-      type: ClusterIP
-      port: 80
-      targetPort: 8080
-      labels: 
-        app: demo-app-backend
-  - name: enclave
-    replicaCount: 1
-    anotherServiceHost: dexter.default.svc.cluster.local
-    service:
-      type: ClusterIP
-      port: 80
-      targetPort: 8080
-      labels: 
-        app: demo-app-backend
-  - name: valkyrie
-    replicaCount: 1
-    anotherServiceHost: enclave.default.svc.cluster.local
-    service:
-      type: ClusterIP
-      port: 80
-      targetPort: 8080
-      labels: 
-        app: demo-app-backend
+- name: dexter
+  replicaCount: 2
+  anotherServiceHost: valkyrie.default.svc.cluster.local
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+    labels:
+      app: demo-app-backend
+- name: enclave
+  replicaCount: 1
+  anotherServiceHost: dexter.default.svc.cluster.local
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+    labels:
+      app: demo-app-backend
+- name: valkyrie
+  replicaCount: 1
+  anotherServiceHost: enclave.default.svc.cluster.local
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+    labels:
+      app: demo-app-backend
 
 tempo:
   host: http://tempo.monitoring.svc.cluster.local:4318
 
-gateway:
-  enabled: true
-  annotations:
-    konghq.com/strip-path: 'true'
-  parentRefs:
-    - name: kong
-  hostnames:
-    - demo-app.piinalpin.lab
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /dexter
-      backendRefs:
-        - name: dexter
-          kind: Service
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /enclave
-      backendRefs:
-        - name: enclave
-          kind: Service
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /valkyrie
-      backendRefs:
-        - name: valkyrie
-          kind: Service
-
 ingress:
-  enabled: false
-  className: "nginx"
+  enabled: true
+  ingressClassName: kong
   annotations:
-    kubernetes.io/ingress.class: nginx
-    ingress.kubernetes.io/rewrite-target: /
-    # kubernetes.io/tls-acme: "true"
+    konghq.com/strip-path: "true"
+    konghq.com/protocols: https
+    konghq.com/preserve-host: "true"
+  hostname: demo-app.piinalpin.lab
+  tls: demo-app-tls
   hosts:
-    - host: demo-app.piinalpin.lab
-      paths:
-        - path: /dexter
-          pathType: Prefix
-          service:
-            name: dexter
-            port: 80
-        - path: /enclave
-          pathType: Prefix
-          service:
-            name: enclave
-            port: 80
-        - path: /valkyrie
-          pathType: Prefix
-          service:
-            name: valkyrie
-            port: 80
+  - host: demo-app.piinalpin.lab
+    paths:
+    - path: /dexter
+      pathType: Prefix
+      service:
+        name: dexter
+        port: 80
+    - path: /enclave
+      pathType: Prefix
+      service:
+        name: enclave
+        port: 80
+    - path: /valkyrie
+      pathType: Prefix
+      service:
+        name: valkyrie
+        port: 80
 
 resources: {}
