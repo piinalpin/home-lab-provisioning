@@ -76,7 +76,7 @@ ingress:
       konghq.com/protocols: https
       konghq.com/preserve-host: "true"
     tls:
-    - secretName: minio-tls
+    - secretName: s3-tls
       hosts:
       - s3.piinalpin.lab
     host: s3.piinalpin.lab

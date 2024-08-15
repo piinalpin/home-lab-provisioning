@@ -2,14 +2,14 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: minio-tenant-1-ca-certificate
-  namespace: s3
+  namespace: storage
 spec:
   secretName: minio-tenant-1-ca-tls
   issuerRef:
     name: selfsigned-root
     kind: ClusterIssuer
     group: cert-manager.io
-  commonName: minio.piinalpin.lab
+  commonName: minio-tenant
   duration: 70128h
   renewBefore: 360h
   isCA: true
@@ -25,8 +25,8 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: minio-tenant-1-ca-issuer
-  namespace: s3
+  name: minio-tenant-ca-issuer
+  namespace: storage
 spec:
   ca:
     secretName: minio-tenant-1-ca-tls
@@ -34,16 +34,55 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: minio-tenant-1-certmanager-cert
-  namespace: s3
+  name: minio-tenant-certmanager-cert
+  namespace: storage
 spec:
   secretName: minio-tls
   issuerRef:
-    name: minio-tenant-1-ca-issuer
+    name: minio-tenant-ca-issuer
+  commonName: minio.piinalpin.lab
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
   dnsNames:
-    - minio.s3
-    - minio.s3.svc
-    - minio.s3.svc.cluster.local
-    - "*.minio.s3.svc.cluster.local"
-    - "*.minio-hl.s3.svc.cluster.local"
+    - minio.storage
+    - minio.storage.svc
+    - minio.storage.svc.cluster.local
+    - "*.minio.storage.svc.cluster.local"
+    - "*.minio-hl.storage.svc.cluster.local"
     - minio.piinalpin.lab
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: s3-tenant-certmanager-cert
+  namespace: storage
+spec:
+  secretName: s3-tls
+  issuerRef:
+    name: minio-tenant-ca-issuer
+  commonName: s3.piinalpin.lab
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+  dnsNames:
+    - s3.storage
+    - s3.storage.svc
+    - s3.storage.svc.cluster.local
+    - s3.piinalpin.lab
