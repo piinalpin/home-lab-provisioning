@@ -398,7 +398,7 @@
                       "pattern": ".*dexter.*",
                       "result": {
                         "index": 0,
-                        "text": "http://demo-app.piinalpin.lab/dexter/actuator/health"
+                        "text": "https://demo-app.piinalpin.lab/dexter/actuator/health"
                       }
                     },
                     "type": "regex"
@@ -408,7 +408,7 @@
                       "pattern": ".*enclave.*",
                       "result": {
                         "index": 1,
-                        "text": "http://demo-app.piinalpin.lab/enclave/actuator/health"
+                        "text": "https://demo-app.piinalpin.lab/enclave/actuator/health"
                       }
                     },
                     "type": "regex"
@@ -418,7 +418,7 @@
                       "pattern": ".*valkyrie.*",
                       "result": {
                         "index": 2,
-                        "text": "http://demo-app.piinalpin.lab/valkyrie/actuator/health"
+                        "text": "https://demo-app.piinalpin.lab/valkyrie/actuator/health"
                       }
                     },
                     "type": "regex"

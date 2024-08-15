@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-metrics
+  annotations:
+    konghq.com/protocol: https
+    ingress.kubernetes.io/service-upstream: "true"
+  labels:
+    app: minio-metrics
+  namespace: storage
+spec:
+  type: ClusterIP
+  selector:
+    app: minio
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: https

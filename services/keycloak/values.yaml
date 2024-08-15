@@ -10,7 +10,6 @@ service:
   annotations:
     konghq.com/protocol: https
     ingress.kubernetes.io/service-upstream: "true"
-  protocol: https
   type: ClusterIP
   port: 8443
 
