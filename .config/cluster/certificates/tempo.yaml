@@ -1,0 +1,59 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tempo-ca-certificate
+  namespace: monitoring
+spec:
+  secretName: tempo-ca-tls
+  issuerRef:
+    name: selfsigned-root
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: tempo
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: tempo-ca-issuer
+  namespace: monitoring
+spec:
+  ca:
+    secretName: tempo-ca-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tempo-certmanager-cert
+  namespace: monitoring
+spec:
+  secretName: tempo-tls
+  issuerRef:
+    name: tempo-ca-issuer
+  commonName: tempo.piinalpin.lab
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+  dnsNames:
+    - tempo.monitoring
+    - tempo.monitoring.svc
+    - tempo.monitoring.svc.cluster.local
+    - tempo.piinalpin.lab

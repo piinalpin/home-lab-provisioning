@@ -31,7 +31,40 @@ defaultRules:
 
 prometheus:
   enabled: true
+  service:
+    annotations:
+      konghq.com/protocol: https
+      ingress.kubernetes.io/service-upstream: "true"
+    labels:
+      app: prometheus
+  ingress:
+    enabled: true
+    annotations:
+      konghq.com/strip-path: "true"
+      konghq.com/protocols: https
+      konghq.com/preserve-host: "true"
+    ingressClassName: kong
+    labels:
+      app: prometheus
+    hosts:
+      - prometheus.piinalpin.lab
+    paths:
+      - /
+    pathType: Prefix
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.piinalpin.lab
   prometheusSpec:
+    web:
+      tlsConfig:
+        keySecret:
+          key: tls.key
+          name: prometheus-tls
+        cert:
+          secret:
+            key: tls.crt
+            name: prometheus-tls
     volumeClaimTemplate:
       spec:
         accessModes: ["ReadWriteOnce"]
@@ -93,8 +126,45 @@ grafana:
     tag: 11.1.0
   fullnameOverride: grafana
   defaultDashboardsTimezone: Asia/Jakarta
+  ingress:
+    enabled: true
+    annotations:
+      konghq.com/strip-path: "true"
+      konghq.com/protocols: https
+      konghq.com/preserve-host: "true"
+    ingressClassName: kong
+    labels:
+      app: grafana
+    hosts:
+      - grafana.piinalpin.lab
+    path: /
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.piinalpin.lab
+  service:
+    annotations:
+      konghq.com/protocol: https
+      ingress.kubernetes.io/service-upstream: "true"
+    labels:
+      app: grafana
+    port: 3000
+    targetPort: 3000
   serviceMonitor:
     enabled: true
+  readinessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+      scheme: HTTPS
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+      scheme: HTTPS
+    initialDelaySeconds: 60
+    timeoutSeconds: 30
+    failureThreshold: 10
   persistence:
     enabled: true
     accessModes:
@@ -126,15 +196,27 @@ grafana:
       jsonData: 
         tlsSkipVerify: true
         maxLines: 1000
+  extraSecretMounts:
+    - name: grafana-tls
+      secretName: grafana-tls
+      mountPath: /etc/grafana/certs
   grafana.ini:
+    server:
+      protocol: https
+      http_port: 3000
+      enforce_domain: False
+      domain: grafana.piinalpin.lab
+      root_url: https://grafana.piinalpin.lab:3000
+      cert_file: /etc/grafana/certs/tls.crt
+      cert_key: /etc/grafana/certs/tls.key
     smtp:
       assertNoLeakedSecrets: true
       enabled: true
-      host: in-v3.mailjet.com:587
-      user: yourapikey
-      password: '"""yoursecretkey"""'
+      host: <your_smtp_host>
+      user: <your_smtp_user>
+      password: '"""YOUR_SECRET_KEY"""'
       startTLS: "NoStartTLS"
-      from_address: youremail@example.com
+      from_address: <your_from_email_address>
 
 alertmanager:
   enabled: true

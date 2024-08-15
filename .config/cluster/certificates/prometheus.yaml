@@ -1,0 +1,59 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-ca-certificate
+  namespace: monitoring
+spec:
+  secretName: prometheus-ca-tls
+  issuerRef:
+    name: selfsigned-root
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: Prometheus
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: prometheus-ca-issuer
+  namespace: monitoring
+spec:
+  ca:
+    secretName: prometheus-ca-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-certmanager-cert
+  namespace: monitoring
+spec:
+  secretName: prometheus-tls
+  issuerRef:
+    name: prometheus-ca-issuer
+  commonName: prometheus.piinalpin.lab
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+  dnsNames:
+    - prometheus.monitoring
+    - prometheus.monitoring.svc
+    - prometheus.monitoring.svc.cluster.local
+    - prometheus.piinalpin.lab

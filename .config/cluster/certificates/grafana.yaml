@@ -1,0 +1,59 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-ca-certificate
+  namespace: monitoring
+spec:
+  secretName: grafana-ca-tls
+  issuerRef:
+    name: selfsigned-root
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: Grafana
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: grafana-ca-issuer
+  namespace: monitoring
+spec:
+  ca:
+    secretName: grafana-ca-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-certmanager-cert
+  namespace: monitoring
+spec:
+  secretName: grafana-tls
+  issuerRef:
+    name: grafana-ca-issuer
+  commonName: grafana.piinalpin.lab
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+  dnsNames:
+    - grafana.monitoring
+    - grafana.monitoring.svc
+    - grafana.monitoring.svc.cluster.local
+    - grafana.piinalpin.lab

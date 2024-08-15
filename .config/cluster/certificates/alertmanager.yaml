@@ -1,0 +1,59 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: alertmanager-ca-certificate
+  namespace: monitoring
+spec:
+  secretName: alertmanager-ca-tls
+  issuerRef:
+    name: selfsigned-root
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: alertmanager
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: alertmanager-ca-issuer
+  namespace: monitoring
+spec:
+  ca:
+    secretName: alertmanager-ca-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: alertmanager-certmanager-cert
+  namespace: monitoring
+spec:
+  secretName: alertmanager-tls
+  issuerRef:
+    name: alertmanager-ca-issuer
+  commonName: alertmanager.piinalpin.lab
+  duration: 70128h
+  renewBefore: 360h
+  isCA: true
+  subject:
+    organizations:
+      - Homelab Ltd.
+    organizationalUnits:
+      - Homelab Ltd.
+  privateKey:
+    algorithm: ECDSA
+    size: 384
+  dnsNames:
+    - alertmanager.monitoring
+    - alertmanager.monitoring.svc
+    - alertmanager.monitoring.svc.cluster.local
+    - alertmanager.piinalpin.lab

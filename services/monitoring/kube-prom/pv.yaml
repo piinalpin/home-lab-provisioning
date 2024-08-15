@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: alertmanager
+  labels:
+    app.kubernetes.io/name: alertmanager
+spec:
+  storageClassName: rook-ceph-block
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /home/k8s/monitoring
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  storageClassName: rook-ceph-block
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /home/k8s/monitoring
