@@ -82,6 +82,8 @@
   become: yes
   become_method: sudo
   gather_facts: yes
+  vars:
+    custom_resource_remote_src: /tmp/calico-custom-resource.yaml
   tasks:
 
     - name: Create k3s config directory
@@ -105,6 +107,22 @@
       - mkdir -p /home/{{ ansible_user }}/.kube
       - cp -i /etc/rancher/k3s/k3s.yaml /home/{{ ansible_user }}/.kube/config
       - chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
+    
+    - name: Install calico pod network
+      become: false
+      command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/tigera-operator.yaml
+      register: install_calico_pod_network
+
+    - name: Copy calico custom resource
+      template:
+        src: calico-custom-resource.yaml.j2
+        dest: "{{ custom_resource_remote_src }}"
+
+    - name: Install custom resource pod network
+      become: false
+      command: kubectl create -f {{ custom_resource_remote_src }}
+      register: install_calico_custom_resource
+      when: install_calico_pod_network is succeeded
   
   handlers:
     - name: Check k3s.service status
