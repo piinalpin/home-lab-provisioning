@@ -58,6 +58,7 @@ spec:
     - minio.storage.svc.cluster.local
     - "*.minio.storage.svc.cluster.local"
     - "*.minio-hl.storage.svc.cluster.local"
+    - minio-metrics.storage.svc.cluster.local
     - minio.piinalpin.lab
 ---
 apiVersion: cert-manager.io/v1

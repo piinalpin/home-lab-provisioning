@@ -57,15 +57,6 @@ env:
   pg_schema: kong
   pg_ssl: "off"
 
-# certificates:
-#   enabled: true
-#   issuer: selfsigned-kong.piinalpin.lab
-#   cluster:
-#     enabled: true
-#   admin:
-#     enabled: true
-#     commonName: kong.piinalpin.lab
-
 # The control plane serves the Admin API
 admin:
   enabled: true
@@ -83,9 +74,9 @@ admin:
       konghq.com/strip-path: "true"
       konghq.com/protocols: https
       konghq.com/preserve-host: "true"
-      cert-manager.io/issuer: selfsigned-kong.piinalpin.lab
+      cert-manager.io/issuer: kong-ca-issuer
     hostname: kong.piinalpin.lab
-    tls: kong.piinalpin.lab-tls
+    tls: kong-tls
     path: /api
     pathType: Prefix
     ingressClassName: kong
@@ -125,9 +116,9 @@ manager:
       konghq.com/strip-path: "true"
       konghq.com/preserve-host: "true"
       konghq.com/protocols: https
-      cert-manager.io/issuer: selfsigned-kong.piinalpin.lab
+      cert-manager.io/issuer: kong-ca-issuer
     hostname: kong.piinalpin.lab
-    tls: kong.piinalpin.lab-tls
+    tls: kong-tls
     path: /
     pathType: Prefix
     ingressClassName: kong

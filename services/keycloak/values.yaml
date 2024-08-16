@@ -20,7 +20,7 @@ ingress:
     konghq.com/protocols: https
     konghq.com/preserve-host: "true"
   hostname: keycloak.piinalpin.lab
-  tls: keycloak-piinalpin-lab-cert
+  tls: keycloak-tls
   path: /
   pathType: Prefix
   ingressClassName: kong

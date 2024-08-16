@@ -25,7 +25,7 @@ tenant:
   metrics:
     enabled: true
     port: 9000
-    protocol: https
+    protocol: http
   certificate:
     externalCaCertSecret: []
     externalCertSecret:

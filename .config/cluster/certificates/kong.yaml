@@ -1,15 +1,15 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: keycloak-ca-certificate
-  namespace: keycloak
+  name: kong-ca-certificate
+  namespace: kong
 spec:
-  secretName: keycloak-ca-tls
+  secretName: kong-ca-tls
   issuerRef:
     name: selfsigned-root
     kind: ClusterIssuer
     group: cert-manager.io
-  commonName: Keycloak
+  commonName: Kong
   duration: 70128h
   renewBefore: 360h
   isCA: true
@@ -25,22 +25,22 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: keycloak-ca-issuer
-  namespace: keycloak
+  name: kong-ca-issuer
+  namespace: kong
 spec:
   ca:
-    secretName: keycloak-ca-tls
+    secretName: kong-ca-tls
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: prometheus-certmanager-cert
-  namespace: keycloak
+  namespace: kong
 spec:
-  secretName: keycloak-tls
+  secretName: kong-tls
   issuerRef:
-    name: keycloak-ca-issuer
-  commonName: keycloak.piinalpin.lab
+    name: kong-ca-issuer
+  commonName: kong.piinalpin.lab
   duration: 70128h
   renewBefore: 360h
   isCA: true
@@ -53,4 +53,6 @@ spec:
     algorithm: ECDSA
     size: 384
   dnsNames:
-    - keycloak.piinalpin.lab
+    - kong.piinalpin.lab
+    - kong-cp-kong-cluster.kong.svc.cluster.local
+    - kong-cp-kong-clustertelemetry.kong.svc.cluster.local

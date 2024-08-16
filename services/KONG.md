@@ -46,13 +46,3 @@ kubectl create secret generic postgres-credential -n kong --from-literal=user=ad
 helm install kong-cp kong/kong -n kong --values ./kong/values-cp.yaml
 helm install kong-cp kong/kong -n kong --values ./kong/values-dp.yaml
 ```
-
-### Install Kong Gateway Operator
-```bash
-helm install kgo kong/gateway-operator -n kong --set image.tag=1.3
-```
-
-### Apply Gateway Class
-```bash
-kubectl apply -f .config/cluster/kong/gatewayclass.yaml
-```
