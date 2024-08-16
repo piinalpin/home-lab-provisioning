@@ -86,6 +86,7 @@ prometheus:
         static_configs:
         - targets:
           - minio-metrics.storage.svc.cluster.local:9000
+        scheme: https
         tls_config:
           insecure_skip_verify: true
   additionalServiceMonitors:
@@ -140,12 +141,10 @@ grafana:
     httpGet:
       path: /api/health
       port: 3000
-      scheme: HTTPS
   livenessProbe:
     httpGet:
       path: /api/health
       port: 3000
-      scheme: HTTPS
     initialDelaySeconds: 60
     timeoutSeconds: 30
     failureThreshold: 10
