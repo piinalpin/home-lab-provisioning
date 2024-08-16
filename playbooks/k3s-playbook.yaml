@@ -40,34 +40,13 @@
         state: present
         update_cache: yes
 
-    - name: Add an apt signing key for Docker
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
-    - name: Add apt repository for stable version
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
-        state: present
-        filename: docker
-        update_cache: yes
-
-    - name: Install docker and dependecies
+    - name: Install containerd
       apt: 
         name:
-          - docker-ce 
-          - docker-ce-cli 
-          - containerd.io
+          - containerd
         state: present
         update_cache: yes
-      notify: Check docker status
-
-    - name: Configure containerd config
-      copy:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
-      with_items:
-        - { src: config.toml, dest: /etc/containerd/config.toml }
+      notify: Check containerd status
 
     - name: Reload systemd daemon
       command: systemctl daemon-reload
@@ -77,17 +56,24 @@
         name: containerd
         state: restarted
         enabled: yes
+    
+    - name: Remove swapfile from /etc/fstab
+      mount:
+        name: "{{ item }}"
+        fstype: swap
+        state: absent
+      with_items:
+        - swap
+        - none
 
-    - name: Add current user to docker group
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
+    - name: Disable swap
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
 
   handlers:
-    - name: Check docker status
+    - name: Check containerd status
       service:
-        name: docker
+        name: containerd
         state: started
         enabled: yes
 
@@ -135,7 +121,7 @@
   tasks:
     
     - name: Join the node to cluster
-      shell: curl -sfL https://get.k3s.io | K3S_TOKEN={{ k3s_token }} K3S_URL=https://{{ k3s_master_ip }}:6443 sh -s - --docker
+      shell: curl -sfL https://get.k3s.io | K3S_TOKEN={{ k3s_token }} K3S_URL=https://{{ k3s_master_ip }}:6443 sh -s -
     
   handlers:
   - name: Check k3s-agent.service status
