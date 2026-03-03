@@ -23,6 +23,36 @@
         enabled: yes
         state: started
 
+    - name: Configure NetworkManager to manage interfaces
+      copy:
+        src: "files/NetworkManager.conf"
+        dest: /etc/NetworkManager/NetworkManager.conf
+        owner: root
+        group: root
+        mode: '0644'
+    
+    - name: Restart NetworkManager
+      systemd:
+        name: NetworkManager
+        state: restarted
+    
+    - name: Configure netplan to use NetworkManager
+      copy:
+        dest: /etc/netplan/99-network-manager.yaml
+        content: |
+          network:
+            version: 2
+            renderer: NetworkManager
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Apply netplan
+      command: netplan apply
+
+    - name: Do a ssh reset connection 
+      meta: reset_connection
+
     - name: Install Tailscale (official script)
       shell: curl -fsSL https://tailscale.com/install.sh | sh
       args:

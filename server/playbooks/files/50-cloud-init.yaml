@@ -1,0 +1,13 @@
+network:
+  version: 2
+  ethernets:
+    enp0s31f6:
+      dhcp4: true
+  wifis:
+    wlp3s0:
+      dhcp4: true
+      access-points:
+        "MAVERICK 5G":
+          auth:
+            key-management: "psk"
+            password: "maungapain"
