@@ -1,0 +1,8 @@
+{
+  "auto_install": [
+    {
+      "image": "/ubuntu-24.04.4-live-server-amd64.iso",
+      "template": "/autoinstall/user-data"
+    }
+  ]
+}

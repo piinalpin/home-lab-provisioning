@@ -1,0 +1,131 @@
+- name: Setup Ubuntu Server
+  hosts: ubuntu
+  become: true
+  become_method: sudo
+  gather_facts: true
+  vars:
+    tailscale_authkey: ""
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: yes
+
+    - name: Install Tailscale (official script)
+      shell: curl -fsSL https://tailscale.com/install.sh | sh
+      args:
+        creates: /usr/sbin/tailscaled
+
+    - name: Enable and start Tailscale
+      systemd:
+        name: tailscaled
+        enabled: yes
+        state: started
+
+    - name: Bring Tailscale up (optional authkey)
+      shell: tailscale up --authkey={{ tailscale_authkey }} --ssh
+      when: tailscale_authkey != ""
+
+    - name: Add Docker GPG key
+      shell: |
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+        gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+    
+    - name: Add Docker repository
+      copy:
+        dest: /etc/apt/sources.list.d/docker.list
+        content: |
+          deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+    
+    - name: Update apt after adding Docker repo
+      apt:
+        update_cache: yes
+    
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+    
+    - name: Do a ssh reset in order to reflect the $USER group changes
+      meta: reset_connection
+
+    - name: Enable Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Install Fish shell
+      apt:
+        name: fish
+        state: present
+
+    - name: Change default shell to Fish for user
+      user:
+        name: "{{ ansible_user }}"
+        shell: /usr/bin/fish
+
+    - name: Install Fisher plugin manager
+      shell: fish -c "curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher"
+      args:
+        creates: "/home/{{ ansible_user }}/.config/fish/functions/fisher.fish"
+      become: false
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+    
+    - name: Install Fish plugins (autosuggestions, syntax highlighting, theme)
+      become: false
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+      shell: |
+        fish -c 'fisher install jethrokuan/fzf'
+        fish -c 'fisher install jethrokuan/fzf-fish'
+        fish -c 'fisher install jorgebucaran/autopair.fish'
+        fish -c 'fisher install catppuccin/fish'
+
+    - name: Download jump .deb package
+      get_url:
+        url: https://github.com/gsamokovarov/jump/releases/download/v0.67.0/jump_0.67.0_amd64.deb
+        dest: /tmp/jump_0.67.0_amd64.deb
+        mode: '0644'
+
+    - name: Install jump via dpkg
+      apt:
+        deb: /tmp/jump_0.67.0_amd64.deb
+        state: present
+    
+    - name: Remove downloaded jump .deb file
+      file:
+        path: /tmp/jump_0.67.0_amd64.deb
+        state: absent
+
+    - name: Update config.fish
+      copy:
+        src: "files/config.fish"
+        dest: "/home/{{ ansible_user }}/.config/fish/config.fish"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+      become: false
+      environment:
+        HOME: "/home/{{ ansible_user }}"

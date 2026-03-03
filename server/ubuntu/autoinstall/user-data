@@ -1,0 +1,52 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  apt:
+    geoip: true
+    preserve_sources_list: false
+    primary:
+    - arches: [ amd64, i386 ]
+      uri: http://archive.ubuntu.com/ubuntu
+    - arches: [ default ]
+      uri: http://ports.ubuntu.com/ubuntu-ports
+
+  identity:
+    hostname: minipc
+    realname: Maverick
+    username: maverick
+    password: $6$P7Aue4enyJFggBcx$f33f7SPwywiAF3FSoHriJy65JfFGm7vMd6AxlLEeKTdbeamVeduxUPrL0mOM2o22V1q1E8EPkFQxpu7C4qFl/.
+
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys: []
+
+  keyboard:
+    layout: us
+
+  locale: en_US
+
+  storage:
+    layout:
+      name: lvm
+
+  network:
+    version: 2
+    ethernets:
+      enp0s31f6:
+        dhcp4: true
+
+    wifis:
+      wlp3s0:
+        dhcp4: true
+        access-points:
+          "MAVERICK 5G":
+            password: "maungapain"
+
+  packages:
+  - curl
+
+  late-commands:
+  - curtin in-target -- apt update
+  - curtin in-target -- systemctl enable ssh
