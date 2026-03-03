@@ -112,21 +112,29 @@
         fish -c 'fisher install jorgebucaran/autopair.fish'
         fish -c 'fisher install catppuccin/fish'
 
-    - name: Download jump .deb package
+    - name: Check if jump is already installed
+      stat:
+        path: /usr/bin/jump
+      register: jump_installed
+
+    - name: Download jump .deb package (if not installed)
       get_url:
         url: https://github.com/gsamokovarov/jump/releases/download/v0.67.0/jump_0.67.0_amd64.deb
         dest: /tmp/jump_0.67.0_amd64.deb
         mode: '0644'
+      when: not jump_installed.stat.exists
 
     - name: Install jump via dpkg
       apt:
         deb: /tmp/jump_0.67.0_amd64.deb
         state: present
-    
+      when: not jump_installed.stat.exists
+
     - name: Remove downloaded jump .deb file
       file:
         path: /tmp/jump_0.67.0_amd64.deb
         state: absent
+      when: not jump_installed.stat.exists
 
     - name: Update config.fish
       copy:
